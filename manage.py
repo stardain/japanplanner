@@ -10,10 +10,12 @@
 # celery + redis для коммуникации аналитиков
 # unittest для тестирования каждого модуля
 
+# python manage.py runserver
+
 
 import os
 import sys
-import psycorg2
+import psycopg2
 
 
 def main():
