@@ -24,8 +24,6 @@ url_customized_event = asyncio.Event()
 
 Функции ниже кастомизируют поиск.
 
-!!!!!!!!!!!!! НАДО УЧЕСТЬ ЧТО РЕСТОРАНОВ МОЖЕТ БЫТЬ МЕНЬШЕ
-
 """
 
 def customize_search(choice):
@@ -71,11 +69,11 @@ def customize_search(choice):
 
 # Функции ниже получают ссылки на n ресторанов, подходящих под кастомизированный поиск. 
 
-rests_asked = 21
-#rests_actual_max = int()
-#rests_limit = min(rests_actual_max, 100)
-#rests_exact_num = min(rests_asked, rests_limit)
-rests_exact_num = min(rests_asked, 100)
+rests_asked = 3
+rests_actual_max = 100
+rests_limit = min(rests_actual_max, 100)
+rests_exact_num = min(rests_asked, rests_limit)
+#rests_exact_num = min(rests_asked, 100)
 exact_pages = ceil(rests_exact_num/20)
 all_pages = []
 
@@ -108,17 +106,27 @@ async def fetch_and_parse(session, url):
     html = await fetch_one_html(session, url)
     return parse_all_rests_from_one_page(html)
 
-async def scrape_urls(urls):
+async def scrape_urls(urls: list):
     """
     делает основную работу
     """
+
+    async def fix_max_number(htmls):
+        async with aiohttp.ClientSession() as sess:
+            page = await fetch_one_html(sess, htmls[0])
+            soup = BeautifulSoup(page, 'lxml')
+            return soup.find_all('span', class_='c-page-count__num')[-1].find('strong').text
+
+    global rests_actual_max
+    rests_actual_max = await fix_max_number(urls)
+
     await url_customized_event.wait()
     async with aiohttp.ClientSession() as main_session:
         all = await asyncio.gather(*[fetch_and_parse(main_session, url) for url in urls])
         all_together = [rest for page in all for rest in page]
         rests_correct_num = []
 
-        for rest in range(rests_asked):
+        for rest in range(rests_exact_num):
             rests_correct_num.append(all_together[rest])
 
         return rests_correct_num
@@ -126,13 +134,13 @@ async def scrape_urls(urls):
 
 jsonnn = "{\"specialty\":\"ramen\",\"sorting_method\":\"by_locals\",\"features\":[\"unlimited_drinks\",\"smoking\"]}"
 customize_search(jsonnn)
+
 gather_all_urls(exact_pages)
 
 links = asyncio.run(scrape_urls(all_pages))
-print(links)
 
-#for ind, link in enumerate(links, start=1):
-#    print(f"{ind}. {link}")
+for ind, link in enumerate(links, start=1):
+    print(f"{ind}. {link}")
 
 
 """
