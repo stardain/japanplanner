@@ -4,6 +4,7 @@ https://www.kaggle.com/code/jenniferzheng0430/tabelog-restaurants-scraper
 """
 
 import time
+import re
 from bs4 import BeautifulSoup
 import requests
 import csv
@@ -132,49 +133,58 @@ async def scrape_urls(urls: list):
         return rests_correct_num
 
 
-jsonnn = "{\"specialty\":\"ramen\",\"sorting_method\":\"by_locals\",\"features\":[\"unlimited_drinks\",\"smoking\"]}"
-customize_search(jsonnn)
-
-gather_all_urls(exact_pages)
-
-links = asyncio.run(scrape_urls(all_pages))
-
-for ind, link in enumerate(links, start=1):
-    print(f"{ind}. {link}")
-
+#jsonnn = "{\"specialty\":\"ramen\",\"sorting_method\":\"by_locals\",\"features\":[\"unlimited_drinks\",\"smoking\"]}"
+#customize_search(jsonnn)
+#gather_all_urls(exact_pages)
+#links = asyncio.run(scrape_urls(all_pages))
+#for ind, link in enumerate(links, start=1):
+#    print(f"{ind}. {link}")
 
 """
 
 Функции ниже извлекают всю необходимую информацию из каждого ресторана. 
 
-1. название + категория (высоко по выбранному рейтингу -> автоматически пиздато)
-2. район + ближайшая станция (близко ехать)
-3. время работы + когда закрыто (если) (чтобы не объебаться со днём)
-4. описание + главная картинка (чтобы не забыть, что там прикольного)
-
 """
 
 
-def scrape(url):
-    r = requests.get(url)
-    soup = BeautifulSoup(r.content, 'html.parser')
+def get_page_contents(url):
+    r = requests.get(url, timeout=5)
+    soup = BeautifulSoup(r.content, 'lxml')
 
-    # <table class="c-table rd-detail-info">
-    table = soup.find("table", class_ = "c-table rd-detail-info")
-    rows = table.tbody.find_all('tr')
-    
-    res_info = {}
-    for row in rows:
-        res_info[row.find('th').text.strip()] = row.find('td').text.strip().replace('\n','')
-#     print(res_info)
-    
-    return res_info
+    # ИМЯ + КАТЕГОРИЯ + ОЦЕНКА
+    parent1 = soup.find("div", class_="rstdtl-header")
+    name = parent1.find("h2", class_="display-name").find('span').text
+    short_desc = parent1.find("span", class_="pillow-word").text
+    rating = parent1.find("span", class_="rdheader-rating__score-val-dtl").text
+
+    # РАЙОН + БЛИЖАЙШАЯ СТАНЦИЯ
+    station = parent1.find("span", class_="linktree__parent-target-text").text
+    #район -- ?
+
+    # ВРЕМЯ РАБОТЫ + КОГДА ЗАКРЫТО
+    parent2 = soup.find("ul", class_="rstinfo-table__business-list")
+    hours_raw = parent2.find_all("li", class_="rstinfo-table__business-item")
+    open_hours = {}
+
+    for weekday_list in hours_raw:
+        days = weekday_list.find("p", class_="rstinfo-table__business-title").text.strip().split(", ")
+        hours = [re.sub(r'\s+', " ", hour.text.replace("\n", " ")) for hour in weekday_list.find_all("li", class_="rstinfo-table__business-dtl-text")]
+        for day in days:
+            open_hours[day] = hours
+
+    open_hours["Closed on"] = [soup.find("div", class_="rstinfo-table__business-other").text.split("on")[-1].strip()]
+
+    # КОМИССИИ
+
+    fee = soup.find("table", class_="c-table c-table--form rstinfo-table__table").find_all("tr")[-1].find("p", class_=None).text
+
+    # ОПИСАНИЕ + ГЛАВНАЯ КАРТИНКА
+
+    main_pic = soup.find("img", class_="p-main-photos__slider-image").get("src")
+    long_desc = soup.find("div", class_="pr-comment-wrap").text.strip()
+
+    return name, station, rating, short_desc, long_desc, open_hours, fee, main_pic
 
 
-#restaurants_info = []
-#for url in links:
-#    cur_restaurant = scrape(url)
-#    restaurants_info.append(cur_restaurant)
-
-#df = pd.DataFrame.from_dict(restaurants_info)
-#df.to_csv('restaurants_tokyo.csv')
+#link = "https://tabelog.com/en/tokyo/A1317/A131702/13284330/"
+#result = get_page_contents(link)
