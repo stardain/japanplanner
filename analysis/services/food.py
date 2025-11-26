@@ -159,7 +159,6 @@ def get_page_contents(url):
 
     # РАЙОН + БЛИЖАЙШАЯ СТАНЦИЯ
     station = parent1.find("span", class_="linktree__parent-target-text").text
-    #район -- ?
 
     # ВРЕМЯ РАБОТЫ + КОГДА ЗАКРЫТО
     parent2 = soup.find("ul", class_="rstinfo-table__business-list")
@@ -188,3 +187,6 @@ def get_page_contents(url):
 
 #link = "https://tabelog.com/en/tokyo/A1317/A131702/13284330/"
 #result = get_page_contents(link)
+
+# !!!!!!!!! СОСТАВИТЬ СПИСОК ВРЕМЕНИ ОТ СТАНЦИИ ДО СТАНЦИИ В ТОКИО И СДЕЛАТЬ ФУНКЦИЮ СЧИТАЮЩУЮ ТОЧНОЕ ВРЕМЯ ДО РЕСТОРАНА С ПОМОЩЬЮ СПИСКА И АПИ
+# ! https://blog.afi.io/blog/osrm-table-api-free-and-open-source-distance-matrix-api/
