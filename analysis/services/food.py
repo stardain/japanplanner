@@ -190,3 +190,4 @@ def get_page_contents(url):
 
 # !!!!!!!!! СОСТАВИТЬ СПИСОК ВРЕМЕНИ ОТ СТАНЦИИ ДО СТАНЦИИ В ТОКИО И СДЕЛАТЬ ФУНКЦИЮ СЧИТАЮЩУЮ ТОЧНОЕ ВРЕМЯ ДО РЕСТОРАНА С ПОМОЩЬЮ СПИСКА И АПИ
 # ! https://blog.afi.io/blog/osrm-table-api-free-and-open-source-distance-matrix-api/
+# ! 1879 x 932
