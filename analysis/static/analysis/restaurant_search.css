@@ -1,6 +1,81 @@
 h1 {
-    padding-top: 200px;
-    padding-right: 180px;
-    padding-left: 180px;
-    color: navy
+    width: fit-content;
+    line-height: 1;
+    color: rgb(243, 228, 224);
+    font-size: 120px;
+    font-family: 'Zain', sans-serif;
+    font-weight: 700;
+    font-style: italic;
+
+    margin-top: 100px;
+    margin-bottom: 100px;
+    text-align: center;
+
+    margin-top: 100px;
+    margin-right: auto;
+    margin-bottom: 100px;
+    margin-left: auto;
+
+  text-shadow: 
+    -5px -5px 0 #3e7079,  /* Top-left shadow */
+    5px -5px 0 #3e7079,   /* Top-right shadow */
+    -5px 5px 0 #3e7079,   /* Bottom-left shadow */
+    5px 5px 0 #3e7079;    /* Bottom-right shadow */
+}
+
+html {
+  background-image: url('background.png');
+  background-repeat: no-repeat;
+  background-position: center center; 
+  background-size: 100% 100%;
+  min-height: 100dvh;
+  width: 100%; 
+}
+
+.zain-extralight {
+  font-family: "Zain", sans-serif;
+  font-weight: 200;
+  font-style: normal;
+}
+
+.zain-light {
+  font-family: "Zain", sans-serif;
+  font-weight: 300;
+  font-style: normal;
+}
+
+.zain-regular {
+  font-family: "Zain", sans-serif;
+  font-weight: 400;
+  font-style: normal;
+}
+
+.zain-bold {
+  font-family: "Zain", sans-serif;
+  font-weight: 700;
+  font-style: normal;
+}
+
+.zain-extrabold {
+  font-family: "Zain", sans-serif;
+  font-weight: 800;
+  font-style: normal;
+}
+
+.zain-black {
+  font-family: "Zain", sans-serif;
+  font-weight: 900;
+  font-style: normal;
+}
+
+.zain-light-italic {
+  font-family: "Zain", sans-serif;
+  font-weight: 300;
+  font-style: italic;
+}
+
+.zain-regular-italic {
+  font-family: "Zain", sans-serif;
+  font-weight: 400;
+  font-style: italic;
 }
