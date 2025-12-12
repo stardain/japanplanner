@@ -1,31 +1,21 @@
 """
-tabelog
-https://www.kaggle.com/code/jenniferzheng0430/tabelog-restaurants-scraper
+кастомизирует поиск, собирает инфу о ресторанах, получает время пути до ресторана, выдаёт карточку ресторана
 """
 
-import time
 import re
+import json
+from math import ceil
+import asyncio
 from bs4 import BeautifulSoup
 import requests
-import csv
-import pandas as pd
-from math import ceil
-import lxml
-import asyncio
 import aiohttp
-import json
+from osrm import OsrmAsyncClient
 
 DOMAIN = 'https://tabelog.com/'
 targeted_region = 'tokyo'
 RESTAURANT_URL = 'https://tabelog.com/en/' + targeted_region + "/rstLst/"
 FEATURES = ""
 url_customized_event = asyncio.Event()
-
-"""
-
-Функции ниже кастомизируют поиск.
-
-"""
 
 def customize_search(choice):
 
@@ -68,8 +58,6 @@ def customize_search(choice):
     url_customized_event.set()
     return RESTAURANT_URL
 
-# Функции ниже получают ссылки на n ресторанов, подходящих под кастомизированный поиск. 
-
 rests_asked = 3
 rests_actual_max = 100
 rests_limit = min(rests_actual_max, 100)
@@ -98,7 +86,7 @@ def parse_all_rests_from_one_page(html):
     """
     soup = BeautifulSoup(html, 'lxml')
                           
-    return [rest['href'] for rest in soup.find_all("a", {"class": "list-rst__rst-name-target cpy-rst-name"},href=True)]
+    return [rest['href'] for rest in soup.find_all("a", {"class": "list-rst__rst-name-target cpy-rst-name"}, href=True)]
 
 async def fetch_and_parse(session, url):
     """
@@ -131,21 +119,6 @@ async def scrape_urls(urls: list):
             rests_correct_num.append(all_together[rest])
 
         return rests_correct_num
-
-
-#jsonnn = "{\"specialty\":\"ramen\",\"sorting_method\":\"by_locals\",\"features\":[\"unlimited_drinks\",\"smoking\"]}"
-#customize_search(jsonnn)
-#gather_all_urls(exact_pages)
-#links = asyncio.run(scrape_urls(all_pages))
-#for ind, link in enumerate(links, start=1):
-#    print(f"{ind}. {link}")
-
-"""
-
-Функции ниже извлекают всю необходимую информацию из каждого ресторана. 
-
-"""
-
 
 def get_page_contents(url):
     r = requests.get(url, timeout=5)
@@ -184,10 +157,37 @@ def get_page_contents(url):
 
     return name, station, rating, short_desc, long_desc, open_hours, fee, main_pic
 
+"""
+Этапы:
+0. Подключить БД.
+1. Составить словарь времени между станциями, большой. Сразу в БД.
+2. Создать каждую станцию и сразу дать ей сокращённое имя, создать граф.
+3. Для каждой станции добавить соседа: вносить сокращённое имя, которое ключ в словаре со временем, извлекать время, вносить в граф. Граф завершён.
+4. Написать функцию, находящую нужное время между двумя короткими именами, но принимает в себя длинное имя (т.к. только длинные имена ищутся на настоящих картах, и оно будет
+найдено как ближайшая станция.)
+"""
 
-#link = "https://tabelog.com/en/tokyo/A1317/A131702/13284330/"
-#result = get_page_contents(link)
+class Station:
+    
+    def __init__(self):
+        self.long_name = ""
+        self.short_name = ""
+        self.next_stations = {}
 
-# !!!!!!!!! СОСТАВИТЬ СПИСОК ВРЕМЕНИ ОТ СТАНЦИИ ДО СТАНЦИИ В ТОКИО И СДЕЛАТЬ ФУНКЦИЮ СЧИТАЮЩУЮ ТОЧНОЕ ВРЕМЯ ДО РЕСТОРАНА С ПОМОЩЬЮ СПИСКА И АПИ
-# ! https://blog.afi.io/blog/osrm-table-api-free-and-open-source-distance-matrix-api/
-# ! 1879 x 932
+    def add_long_name(self, name: str):
+        self.long_name = name
+        return "Added a long name!"
+
+    def add_short_name(self, name: str)
+        self.short_name = name
+        return "Added a short name!"
+
+    async def add_neighbour(self, station: str):
+
+        transfer_time = 0
+
+        # обращение к таблице
+
+        self.next_stations[station] = transfer_time
+        return f"Successfully added a neighbour {station} for a station {self}"
+

@@ -1,10 +1,14 @@
-from django.db import models
+from django.db import connections
+from django.db.utils import OperationalError
+from dotenv import load_dotenv
 
-# Create your models here.
+load_dotenv()
 
-#class TodoItem(models.Model):
-#    title = models.CharField(max_length=200)
-#    completed = models.BooleanField(default=False)
-
-# когда меняется модель — python manage.py migrate
-
+db_conn = connections['default']
+try:
+    c = db_conn.cursor()
+    print("Database connection successful!")
+except OperationalError as e:
+    print(f"Database connection failed: {e}")
+finally:
+    db_conn.close()
