@@ -1,15 +1,22 @@
 """
 кастомизирует поиск, собирает инфу о ресторанах, получает время пути до ресторана, выдаёт карточку ресторана
+
+! в какой-то момент, когда будет готово, добавить railways
+
 """
 
 import re
 import json
+import sys
+import os
+import django
 from math import ceil
 import asyncio
 from bs4 import BeautifulSoup
 import requests
 import aiohttp
 from osrm import OsrmAsyncClient
+from django.db import connection
 
 DOMAIN = 'https://tabelog.com/'
 targeted_region = 'tokyo'
@@ -159,37 +166,131 @@ def get_page_contents(url):
 
 """
 Этапы:
-= 0. Подключить БД.
-1. Составить словарь времени между станциями, большой. Сразу в БД.
-2. Создать каждую станцию и сразу дать ей сокращённое имя, создать граф.
-3. Для каждой станции добавить соседа: вносить сокращённое имя, которое ключ в словаре со временем, извлекать время, вносить в граф. Граф завершён.
-4. Написать функцию, находящую нужное время между двумя короткими именами, но принимает в себя длинное имя (т.к. только длинные имена ищутся на настоящих картах, и оно будет
-найдено как ближайшая станция.)
+
+1. Написать связи веток в таблицу с соседями.
+
+2. Написать функцию-помощника, принимающую стартовую станцию, станцию-цель, список путей по веткам (глобально) и направление поиска (вверх/вниз). 
+Наматывает свой личный счётчик пройденных станций и сами станции, возвращает их. 
+По нахождении станции-перехода на нужную ветку, запускает себя для неё. 
+Если мы находимся на нужной ветке, то игнорирует направление, это краевой случай. 
+3. Написать функцию, собирающую по лучшему пути общее время в метро. Это итоговая функция. 
 
 pgbouncer для единоразового подключения к бд
+
+            WITH RECURSIVE ? AS (
+                       SELECT n
+
+                       UNION ALL
+
+                       SELECT m
+                       FROM ?
+                       WHERE n = m
+
+                       )
+            SELECT ?? from ?
+
 """
 
-class Station:
+PARENT_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.append(PARENT_DIR)
+
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'project.settings')
+django.setup()
+
+def add_a_cross(fullname, lines): 
+
+    all_platform_versions = []
+
+    with connection.cursor() as cursor:
+        # находим все версии нынешней станции и сохраняем их
+        for line in lines:
+            cursor.execute(f"SELECT station_id FROM station_info WHERE station_id LIKE '{line}%' AND station_fullname = '{fullname}';")
+            all_platform_versions.append(cursor.fetchone()[0])
+
+        for version1 in all_platform_versions:
+            for version2 in all_platform_versions:
+                if version1 != version2:
+                    cursor.execute(f"INSERT INTO station_neighbours (station_id, station_neighbours, time) VALUES ('{version1}', '{version2}', 5)")
+        
+        return f"Inserted all {fullname} stations on every line!"
+
+
+stations = [
+    {"station": "Akasaka-mitsuke", "lines": ["G", "M"], "levels": "2"},
+    {"station": "Aoyama-itchome", "lines": ["G", "E", "Z"], "levels": "2"},
+    {"station": "Asakusa", "lines": ["G", "A"], "levels": "2"},
+    {"station": "Azabu-juban", "lines": ["N", "E"], "levels": "2"},
+    {"station": "Daimon", "lines": ["E", "A"], "levels": "3"},
+    {"station": "Ginza", "lines": ["G", "H", "M"], "levels": "2"},
+    {"station": "Hibiya", "lines": ["H", "C", "I"], "levels": "3"},
+    {"station": "Higashi-ginza", "lines": ["H", "A"], "levels": "2"},
+    {"station": "Higashi-shinjuku", "lines": ["F", "E"], "levels": "2"},
+    {"station": "Hongo-sanchome", "lines": ["E", "M"], "levels": "2"},
+    {"station": "Ichigaya", "lines": ["Y", "S", "N"], "levels": "2"},
+    {"station": "Iidabashi", "lines": ["T", "Y", "N", "E"], "levels": "4"},
+    {"station": "Ikebukuro", "lines": ["Y", "F", "M"], "levels": "5"},
+    {"station": "Jimbocho", "lines": ["Z", "I", "S"], "levels": "3"},
+    {"station": "Kasumigaseki", "lines": ["M", "C", "H"], "levels": "3"},
+    {"station": "Kayabacho", "lines": ["H", "T"], "levels": "2"},
+    {"station": "Kita-senju", "lines": ["C", "H"], "levels": "3"},
+    {"station": "Kiyosumi-shirakawa", "lines": ["Z", "E"], "levels": "2"},
+    {"station": "Kokkai-gijidomae", "lines": ["M", "C"], "levels": "2"},
+    {"station": "Korakuen", "lines": ["N", "M"], "levels": "3"},
+    {"station": "Kasuga", "lines": ["E", "I"], "levels": "3"},
+    {"station": "Kudanshita", "lines": ["T", "Z", "S"], "levels": "3"},
+    {"station": "Meiji-jingumae", "lines": ["C", "F"], "levels": "2"},
+    {"station": "Mita", "lines": ["A", "I"], "levels": "2"},
+    {"station": "Mitsukoshimae", "lines": ["G", "Z"], "levels": "2"},
+    {"station": "Monzen-nakacho", "lines": ["T", "E"], "levels": "2"},
+    {"station": "Morishita", "lines": ["S", "E"], "levels": "3"},
+    {"station": "Nagatacho", "lines": ["Z", "Y", "N"], "levels": "3"},
+    {"station": "Nakano-sakaue", "lines": ["M", "E"], "levels": "2"},
+    {"station": "Nihombashi", "lines": ["G", "T", "A"], "levels": "2"},
+    {"station": "Ningyocho", "lines": ["H", "A"], "levels": "2"},
+    {"station": "Omote-sando", "lines": ["G", "Z", "C"], "levels": "1"},
+    {"station": "Oshiage", "lines": ["A", "Z"], "levels": "3"},
+    {"station": "Otemachi", "lines": ["M", "T", "C", "Z", "I"], "levels": "5"},
+    {"station": "Roppongi", "lines": ["H", "E"], "levels": "2"},
+    {"station": "Shibuya", "lines": ["G", "Z", "F"], "levels": "4"},
+    {"station": "Shimbashi", "lines": ["G", "A"], "levels": "2"},
+    {"station": "Shirokane-takanawa", "lines": ["N", "I"], "levels": "2"},
+    {"station": "Shinjuku", "lines": ["M", "S", "E"], "levels": "5"},
+    {"station": "Shinjuku-sanchome", "lines": ["F", "M", "S"], "levels": "3"},
+    {"station": "Sumiyoshi", "lines": ["Z", "S"], "levels": "2"},
+    {"station": "Tameike-sanno", "lines": ["G", "N"], "levels": "2"},
+    {"station": "Tsukishima", "lines": ["Y", "E"], "levels": "2"},
+    {"station": "Ueno", "lines": ["G", "H"], "levels": "3"},
+    {"station": "Yotsuya", "lines": ["M", "N"], "levels": "2"}
+]
+
+for s in stations:
+    fullname = s["station"]
+    lines = s["lines"]
+    print(add_a_cross(fullname, lines))
+
+
+
+
+
+
+
+
+
+def line_combos_search(start_fullname: str, end_fullname: str):
+    """
+    извлекает время из бд по длинным именам, находит все комбинации веток для достижения нужной
+    """
+    with connection.cursor() as cursor:
+        query = "SELECT station_id FROM station_info WHERE station_fullname = %s"
+        cursor.execute(query, (start_fullname,))
+        start_ids = cursor.fetchall()
+        cursor.execute(query, (end_fullname,))
+        end_ids = cursor.fetchall()
+
+
+        
+        cursor.close()
+        return start_ids, end_ids
+
     
-    def __init__(self):
-        self.long_name = ""
-        self.short_name = ""
-        self.next_stations = {}
-
-    def add_long_name(self, name: str):
-        self.long_name = name
-        return "Added a long name!"
-
-    def add_short_name(self, name: str)
-        self.short_name = name
-        return "Added a short name!"
-
-    async def add_neighbour(self, station: str):
-
-        transfer_time = 0
-
-        # обращение к таблице
-
-        self.next_stations[station] = transfer_time
-        return f"Successfully added a neighbour {station} for a station {self}"
-
+#print(line_combos_search("Tokyo", "Ginza"))
