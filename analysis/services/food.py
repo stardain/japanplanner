@@ -210,7 +210,7 @@ def add_a_cross(fullname, lines):
         for version1 in all_platform_versions:
             for version2 in all_platform_versions:
                 if version1 != version2:
-                    cursor.execute(f"INSERT INTO station_neighbours (station_id, station_neighbours, time) VALUES ('{version1}', '{version2}', 5)")
+                    cursor.execute(f"INSERT INTO station_neighbours (station_id, station_neighbour, time) VALUES ('{version1}', '{version2}', 5)")
         
         return f"Inserted all {fullname} stations on every line!"
 
