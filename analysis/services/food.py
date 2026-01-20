@@ -208,7 +208,7 @@ def find_every_cross(start_fullname: str, end_fullname: str):
             cursor.execute(f"SELECT station_id, station_neighbour FROM station_neighbours WHERE station_id LIKE '{start[0]}%' AND station_neighbour LIKE '{end[0]}%'")
             return len(cursor.fetchall())
         # 2: добавляем неопознаваемые прямые переходы (A-B)
-        for i in range(are_there_straight_crosses(start_line_id, end_line_id)):
+        if are_there_straight_crosses(start_line_id, end_line_id) > 0:
             cross_list.append("Straight")
         # 3: добавляем линии переходов
         for line in line_list:
