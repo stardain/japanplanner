@@ -62,11 +62,10 @@ def find_all_line_routes(start_station_id: str, cross_line: str, end_station_id:
     return combinations
 
 
-
 def quickest_way(start: str, routes: list, end: str):
 
     quickest_count = 100
-    quickest = []
+    quickest_stations = []
 
     for route in routes:
 
@@ -78,7 +77,7 @@ def quickest_way(start: str, routes: list, end: str):
             length = A+M+B
             quickest_count = min(quickest_count, A+M+B)
             if length == quickest_count:
-                quickest = route
+                quickest_stations = route
 
         elif len(route) == 2:
 
@@ -87,47 +86,71 @@ def quickest_way(start: str, routes: list, end: str):
             length = A+B
             quickest_count = min(quickest_count, A+B)
             if length == quickest_count:
-                quickest = route
+                quickest_stations = route
     
-    quickest = [start] + list(quickest) + [end]
+    quickest_stations = [start] + list(quickest_stations) + [end]
     time = 0
 
-    for ind in range(0, len(quickest)-2):
+    for ind in range(len(quickest_stations)-1):
         # ind + ind+1
         # (4, ['A07', 'A10', 'G08', 'G09'])
+        # 3 2 2 5 2
 
-        if quickest[ind[-1]] < quickest[ind+1[-1]]:
-            next_st = quickest[ind[:-1]] + str(int(quickest[ind[-1]])+1)
+        if quickest_stations[ind][0] != quickest_stations[ind+1][0]:
+            next_st = quickest_stations[ind+1]
+
+            with connection.cursor() as cursor:
+
+                cursor.execute(f"""
+
+                SELECT time FROM station_neighbours WHERE station_id = '{quickest_stations[ind]}' AND station_neighbour = '{next_st}';
+
+                """)
+
+                res_time = cursor.fetchone()
+
+            if res_time and res_time[0] is not None:
+                time += res_time[0]
+            
+            continue
+
+        elif quickest_stations[ind][-2:] < quickest_stations[ind+1][-2:]:
+            next_st = quickest_stations[ind][:-2] + f"{int(quickest_stations[ind][-2:])+1:02d}"
+
         else:
-            next_st = quickest[ind[:-1]] + str(int(quickest[ind[-1]])-1)
+            next_st = quickest_stations[ind][:-2] + f"{int(quickest_stations[ind][-2:])-1:02d}"
 
         with connection.cursor() as cursor:
 
             cursor.execute(f"""
                     WITH RECURSIVE route AS (
-                    SELECT station_id, station_neighbour, time
-                    FROM station_neighbours
-                    WHERE station_id == '{quickest[ind]}' AND station_neighbour == '{next_st}'
+                        SELECT station_id, station_neighbour, time AS total_time, 1 as depth
+                        FROM station_neighbours
+                        WHERE station_id = '{quickest_stations[ind]}' AND station_neighbour = '{next_st}'
 
                     UNION ALL
 
-                    SELECT station_id, station_neighbour, time
-                    FROM station_neighbours sn
-                    INNER JOIN route r ON sn.station_neighbour = r.station_id
-                    WHERE r.station_neighbour <> '{quickest[ind+1]}'
+                        SELECT sn.station_id, sn.station_neighbour, (r.total_time + sn.time), r.depth + 1
+                        FROM station_neighbours sn
+                        INNER JOIN route r ON sn.station_id = r.station_neighbour
+                        WHERE r.station_neighbour <> '{quickest_stations[ind+1]}'
+                        AND r.depth < 15
                     )
-
-                    SELECT SUM(time) FROM route
-                    WHERE 
+                    
+                    SELECT total_time FROM route 
+                    WHERE station_neighbour = '{quickest_stations[ind+1]}'
+                    ORDER BY total_time ASC 
+                    LIMIT 1; 
 
             """)
 
+            res_time = cursor.fetchone()
 
-    return quickest_count, quickest
+        if res_time and res_time[0] is not None:
+            time += res_time[0]
+
+    return time
 
 routes = find_all_line_routes("A07", "Straight", "G09")
-print(quickest_way("A07", routes, "G09"))
-
-#print(find_full_route("A07", "I", "N04"))
-#routes = find_all_line_routes("A01", "G", "C01")
-#print(quickest_way("A01", routes, "C01"))
+print(routes)
+print(quickest_way("A06", routes, "G09"))
