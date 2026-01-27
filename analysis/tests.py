@@ -79,6 +79,22 @@ def quickest_way(start: str, routes: list, end: str):
             if length == quickest_count:
                 quickest_stations = route
 
+        elif route[1] == end:
+            # после перехода сразу попадаем на корректную станцию, конец = станция перехода
+
+            length = abs(int(start[-2:])-int(route[0][-2:]))
+            quickest_count = min(quickest_count, length)
+            if length == quickest_count:
+                quickest_stations = route[:-1]
+
+        elif route[0] == start:
+            # после перехода сразу попадаем на корректную станцию, начало = станция перехода
+
+            length = abs(int(route[1][-2:])-int(end[-2:]))
+            quickest_count = min(quickest_count, length)
+            if length == quickest_count:
+                quickest_stations = route[1:]
+
         elif len(route) == 2:
 
             A = abs(int(start[-2:])-int(route[0][-2:]))
@@ -87,6 +103,7 @@ def quickest_way(start: str, routes: list, end: str):
             quickest_count = min(quickest_count, A+B)
             if length == quickest_count:
                 quickest_stations = route
+
     
     quickest_stations = [start] + list(quickest_stations) + [end]
     time = 0
@@ -96,14 +113,21 @@ def quickest_way(start: str, routes: list, end: str):
         # (4, ['A07', 'A10', 'G08', 'G09'])
         # 3 2 2 5 2
 
-        if quickest_stations[ind][0] != quickest_stations[ind+1][0]:
-            next_st = quickest_stations[ind+1]
+        # ['A07', 'A10', 'G08'] 
+        # 3 2 2 
+
+        current_st = quickest_stations[ind]
+        destination = quickest_stations[ind+1]
+
+        print(quickest_stations)
+
+        if current_st[0] != quickest_stations[ind+1][0]:
 
             with connection.cursor() as cursor:
 
                 cursor.execute(f"""
 
-                SELECT time FROM station_neighbours WHERE station_id = '{quickest_stations[ind]}' AND station_neighbour = '{next_st}';
+                SELECT time FROM station_neighbours WHERE station_id = '{current_st}' AND station_neighbour = '{destination}';
 
                 """)
 
@@ -113,12 +137,9 @@ def quickest_way(start: str, routes: list, end: str):
                 time += res_time[0]
             
             continue
-
-        elif quickest_stations[ind][-2:] < quickest_stations[ind+1][-2:]:
-            next_st = quickest_stations[ind][:-2] + f"{int(quickest_stations[ind][-2:])+1:02d}"
-
-        else:
-            next_st = quickest_stations[ind][:-2] + f"{int(quickest_stations[ind][-2:])-1:02d}"
+        
+        direction = 1 if current_st[-2:] < quickest_stations[ind+1][-2:] else -1
+        next_st = current_st[:-2] + f"{int(current_st[-2:])+direction:02d}"
 
         with connection.cursor() as cursor:
 
@@ -126,19 +147,23 @@ def quickest_way(start: str, routes: list, end: str):
                     WITH RECURSIVE route AS (
                         SELECT station_id, station_neighbour, time AS total_time, 1 as depth
                         FROM station_neighbours
-                        WHERE station_id = '{quickest_stations[ind]}' AND station_neighbour = '{next_st}'
+                        WHERE station_id = '{current_st}' AND station_neighbour = '{next_st}'
 
                     UNION ALL
 
                         SELECT sn.station_id, sn.station_neighbour, (r.total_time + sn.time), r.depth + 1
                         FROM station_neighbours sn
                         INNER JOIN route r ON sn.station_id = r.station_neighbour
-                        WHERE r.station_neighbour <> '{quickest_stations[ind+1]}'
-                        AND r.depth < 15
+                        WHERE r.station_neighbour <> '{destination}'
+                        AND r.depth < 38
+                        AND sn.station_neighbour LIKE '{current_st[:-2]}%'
                     )
                     
+                    CYCLE station_neighbour SET is_cycle USING path
+
                     SELECT total_time FROM route 
-                    WHERE station_neighbour = '{quickest_stations[ind+1]}'
+                    WHERE station_neighbour = '{destination}'
+                    AND NOT is_cycle
                     ORDER BY total_time ASC 
                     LIMIT 1; 
 
@@ -148,9 +173,11 @@ def quickest_way(start: str, routes: list, end: str):
 
         if res_time and res_time[0] is not None:
             time += res_time[0]
+        
+        print(time)
 
     return time
 
-routes = find_all_line_routes("A07", "Straight", "G09")
+routes = find_all_line_routes("A01", "Straight", "G01")
 print(routes)
-print(quickest_way("A06", routes, "G09"))
+print(quickest_way("A01", routes, "G01"))
