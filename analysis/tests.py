@@ -16,9 +16,35 @@ django.setup()
 
 # ЕСТЬ: функция поиска ВСЕХ ЛИНИЙ: с кроссами и прямых переходов
 # ЕСТЬ: функция находящая все пути для линий и прямых переходов
+# ЕСТЬ: нахождение быстрейшей функции + подсчёт минут
+# ЕСТЬ: собирательной функции, которая будет запрашивать ВСЕ ВОЗМОЖНЫЕ ПУТИ (и линии, и прямые переходы), расшифровывать и те и те, находить быстрейший и выдавать время путешествия
 
-# НЕ ХВАТАЕТ: нахождение быстрейшей функции + подсчёт минут
-# НЕ ХВАТАЕТ: собирательной функции, которая будет запрашивать ВСЕ ВОЗМОЖНЫЕ ПУТИ (и линии, и прямые переходы), расшифровывать и те и те, находить быстрейший и выдавать время путешествия
+def find_every_cross(start_line_id: str, end_line_id: str):
+    """
+    извлекает время из бд по длинным именам, находит все комбинации веток с 1-2 пересадкой
+    """
+    with connection.cursor() as cursor:
+
+        line_list = ['G', 'M', 'Mb', 'H', 'T', 'C', 'Y', 'Z', 'N', 'F', 'A', 'I', 'S', 'E']
+        cross_list = []
+
+        # 1: краевой случай: оба на одной ветке (A-A)
+        #if start_line_id[0] == end_line_id[0]:
+        #    return ["None"]
+        # 2: находит все прямые переходы со стартовой ветки на нужную (A-B)
+        def are_there_straight_crosses(start, end):
+            cursor.execute(f"SELECT station_id, station_neighbour FROM station_neighbours WHERE station_id LIKE '{start[0]}%' AND station_neighbour LIKE '{end[0]}%'")
+            return len(cursor.fetchall())
+        # 2: добавляем неопознаваемые прямые переходы (A-B)
+        if are_there_straight_crosses(start_line_id, end_line_id) > 0:
+            cross_list.append("Straight")
+        # 3: добавляем линии переходов
+        for line in line_list:
+            if are_there_straight_crosses(start_line_id, line) > 0 and are_there_straight_crosses(line, end_line_id) > 0:
+                cross_list.append(line)
+
+        return (start_line_id, end_line_id, cross_list)
+
 
 def find_all_line_routes(start_station_id: str, cross_line: str, end_station_id: str):
 
@@ -119,8 +145,6 @@ def quickest_way(start: str, routes: list, end: str):
         current_st = quickest_stations[ind]
         destination = quickest_stations[ind+1]
 
-        print(quickest_stations)
-
         if current_st[0] != quickest_stations[ind+1][0]:
 
             with connection.cursor() as cursor:
@@ -173,11 +197,38 @@ def quickest_way(start: str, routes: list, end: str):
 
         if res_time and res_time[0] is not None:
             time += res_time[0]
-        
-        print(time)
 
     return time
 
-routes = find_all_line_routes("A01", "Straight", "G01")
-print(routes)
-print(quickest_way("A01", routes, "G01"))
+
+def home_to_restaurant_time(home_fullname: str, restaurant_fullname: str):
+
+    # ищем все варианты станций, на которые можем спуститься в большой станции -- где несколько станций с одним именем
+    with connection.cursor() as cursor:
+        query = "SELECT station_id FROM station_info WHERE station_fullname = %s"
+        cursor.execute(query, (home_fullname,))
+        home_station_ids = [name[0] for name in cursor.fetchall()]
+        cursor.execute(query, (restaurant_fullname,))
+        rest_station_ids = [name[0] for name in cursor.fetchall()]
+        combinations = [[start, end] for start in home_station_ids for end in rest_station_ids]
+
+    best_travel_time = 100
+
+    for comb in combinations:
+
+        home_station, restaurant_station = comb
+
+        # every suitable line
+        # ['Straight', 'H', 'T', 'Z', 'A', 'I', 'S', 'E']
+        home_st_id, rest_st_id, every_cross = find_every_cross(home_station, restaurant_station)
+
+        for cross in every_cross:
+            # every variant of getting on this line
+            # [('A18', 'G19'), ('A13', 'G11'), ('A10', 'G08')]
+            routes_for_a_line = find_all_line_routes(home_st_id, cross, rest_st_id)
+            best_travel_time = min(best_travel_time, quickest_way(home_st_id, routes_for_a_line, rest_st_id))
+
+    return best_travel_time
+
+
+print(home_to_restaurant_time("Magome", "Shiodome"))
