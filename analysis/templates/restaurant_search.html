@@ -3,69 +3,147 @@
 {% block header %}restaurant finder{% endblock %}
 
 {% block content %}
-        <label for="myNumberInput" class="input-label">
-            <label for="quantity">Quantity:</label>
-            <input type="number" id="quantity" name="quantity" min="1" max="100">
-            <span class="unit-text">cm</span>
-        </label>
+        <div style="flex: 0 0 100%; display: flex; justify-content: center;">
+        <div class="row-full" style="background-color: #F2F0EF; 
+                display: flex; 
+                flex-direction: row; 
+                gap: 4px; 
+                padding: 15px; 
+                width: fit-content; 
+                border-radius: 8px;">
+            <label for="amount" style="font-weight: bold;">мне нужен топ -</label>
+            <input type="number" style="width: 5ch;" id="amount" name="amount" min="1" step="1">
+            <span >(макс. 100)</span>
+        </div>
+        </div>
 
         <br>
 
         <form>
-            <p>Select your favorite color:</p>
+            <p style="font-weight: bold; font-size: 18px;">специализация ресторана</p>
 
-            <input type="radio" id="red" name="fav_color" value="red">
-            <label for="red">Red</label><br>
+            <div class="options-group">
+            <div class="checkbox-item">
+            <input type="radio" id="washoku" name="specialty" value="washoku">
+            <label for="washoku">японская классика</label><br>
+            </div>
 
-            <input type="radio" id="blue" name="fav_color" value="blue">
-            <label for="blue">Blue</label><br>
+            <div class="checkbox-item">
+            <input type="radio" id="izakaya" name="specialty" value="izakaya">
+            <label for="izakaya">изакая</label><br>
+            </div>
 
-            <input type="radio" id="green" name="fav_color" value="green" checked>
-            <label for="green">Green</label><br>
+            <div class="checkbox-item">
+            <input type="radio" id="sushi_conveyor" name="specialty" value="sushi_conveyor">
+            <label for="sushi_conveyor">суши-конвейер</label><br>
+            </div>
+
+            <div class="checkbox-item">
+            <input type="radio" id="yakiniku" name="specialty" value="yakiniku">
+            <label for="yakiniku">жареное мясо</label><br>
+            </div>
+
+            <div class="checkbox-item">
+            <input type="radio" id="crab" name="specialty" value="crab">
+            <label for="crab">краб</label><br>
+            </div>
+
+            <div class="checkbox-item">
+            <input type="radio" id="green" name="specialty" value="green">
+            <label for="green">морепродукты</label><br>
+            </div>
+
+            <div class="checkbox-item">
+            <input type="radio" id="ramen" name="specialty" value="ramen">
+            <label for="ramen">рамен</label><br>
+            </div>
+            </div>
         </form>
 
         <form>
-            <p>Select your favorite shi:</p>
+            <p style="font-weight: bold;">пункты блаженства</p>
 
-            <input type="checkbox" id="bike" name="vehicle" value="bike">
-            <label for="bike">I have a bike</label><br>
+            <div class="options-group">
+            <div class="checkbox-item">
+            <input type="checkbox" id="unlimited_drinks" name="additions" value="unlimited_drinks">
+            <label for="unlimited_drinks">безлимит алкоголь</label><br>
+            </div>
 
-            <input type="checkbox" id="car" name="vehicle" value="car">
-            <label for="car">I have a car</label><br>
+            <div class="checkbox-item">
+            <input type="checkbox" id="unlimited_food" name="additions" value="unlimited_food">
+            <label for="unlimited_food">безлимит еда</label><br>
+            </div>
 
-            <input type="checkbox" id="boat" name="vehicle" value="boat" checked>
-            <label for="boat">I have a boat</label>
+            <div class="checkbox-item">
+            <input type="checkbox" id="smoking" name="additions" value="smoking">
+            <label for="smoking">курение is ok</label>
+            </div>
+
+            <div class="checkbox-item">
+            <input type="checkbox" id="sake" name="additions" value="sake">
+            <label for="sake">саке</label>
+            </div>
+
+            <div class="checkbox-item">
+            <input type="checkbox" id="shochu" name="additions" value="shochu">
+            <label for="shochu">сётю</label>
+            </div>
+            </div>
         </form>
 
         <form>
-            <p>Select your favorite color:</p>
+            <p style="font-weight: bold;">лучшие по:</p>
 
-            <input type="radio" id="red" name="fav_color" value="red">
-            <label for="red">Red</label><br>
+            <div class="options-group">
+            <div class="checkbox-item">
+            <input type="radio" id="by_locals" name="sorting" value="by_locals">
+            <label for="by_locals">фавориты местных</label><br>
+            </div>
 
-            <input type="radio" id="blue" name="fav_color" value="blue">
-            <label for="blue">Blue</label><br>
+            <div class="checkbox-item">
+            <input type="radio" id="by_rating" name="sorting" value="by_rating">
+            <label for="by_rating">наивысшая оценка</label><br>
+            </div>
 
-            <input type="radio" id="green" name="fav_color" value="green" checked>
-            <label for="green">Green</label><br>
+            <div class="checkbox-item">
+            <input type="radio" id="by_reservations" name="sorting" value="by_reservations">
+            <label for="by_reservations">бронируют чаще всего</label><br>
+            </div>
+            </div>
         </form>
 
-        <form action="/submit-form" method="post">
-        <label for="fruit-select">Choose a fruit:</label>
-        <select name="fruits" id="fruit-select">
-            <option value="">--Please choose an option--</option>
-            <option value="apple">Apple</option>
-            <option value="banana">Banana</option>
-            <option value="orange">Orange</option>
-            <option value="grape">Grape</option>
+            <!-- Inner Div: Background only as wide as the content -->
+            <div style="background-color: #F2F0EF; 
+                        display: flex; 
+                        flex-direction: column; 
+                        gap: 8px; 
+                        padding: 15px; 
+                        width: fit-content; 
+                        border-radius: 8px;">
+                <label for="address" style="font-weight: bold;">адрес проживания</label>
+                <input type="text" id="address" required style="width: 25ch;">
+                <small style="font-size: 0.8rem; opacity: 0.8;">для подсчёта времени в дороге</small>
+            </div>
+
+        <form action="/submit-form" method="post" style="flex: 0 0 200px;">
+        <label for="day-select" style="width: max-content; font-weight: bold; padding: 15px;">запланированный день</label>
+        <select name="days" id="day-select">
+            <option value="">--выберите день--</option>
+            <option value="mon">понедельник</option>
+            <option value="tue">вторник</option>
+            <option value="wed">среда</option>
+            <option value="thu">четверг</option>
+            <option value="fri">пятница</option>
+            <option value="sat">суббота</option>
+            <option value="sun">воскресенье</option>
         </select>
         </form>
 
-        <label for="username">Username:</label>
-        <input type="text" required>
-
         <br>
 
-        <button type="submit">Send</button>
+        <div class="row-full">
+            <button type="submit">Send</button>
+        </div>
+
 
 {% endblock %}

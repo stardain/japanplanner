@@ -1,26 +1,82 @@
+body {
+  /* Set the size to be smaller than the HTML (the background) */
+  /* For example, 80% width/height leaves a 10% border on all sides */
+  width: 80%; 
+  height: 70%;
+  /* Reset default margins so centering works perfectly */
+  margin: 0;
+  /* Optional: Add a border to see where your content area is during testing */
+  border: 5px solid #F2F0EF;
+
+  display: flex;
+  flex-wrap: wrap;      /* Allows forms to move to the next line */
+  justify-content: center; /* Centers the forms in every row */
+  gap: 20px;            /* Space between forms */
+  padding: 20px;
+
+}
+
+form {
+  flex: 0 1 calc(28% - 20px); 
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column; /* Stacks the checkbox groups vertically */
+  background-color: #F2F0EF; 
+  gap: 8px; 
+  padding: 6px; 
+  width: fit-content; 
+  border-radius: 8px;
+  align-items: center;
+}
+
+.checkbox-item {
+  display: flex;
+  align-items: center;    /* Vertically centers checkbox with text */
+  gap: 8px;               /* Space between box and text */
+}
+
+.row-full {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  text-align: center;
+}
+
+.options-group {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start; /* Keeps checkboxes/labels starting at the same point */
+  width: max-content;      /* Only as wide as the longest option */
+  text-align: left;        /* Aligns text to the left */
+  gap: 8px;
+  margin: 30px;
+}
+
+p {
+  margin-top: 30px;
+  margin-bottom: 0px;
+  font-size: 18px;
+}
+
+label {
+  font-size: 18px;
+}
+
 h1 {
     width: fit-content;
     line-height: 1;
-    color: rgb(243, 228, 224);
+    color: #F2F0EF;
     font-size: 120px;
     font-family: 'Zain', sans-serif;
     font-weight: 700;
     font-style: italic;
 
-    margin-top: 100px;
-    margin-bottom: 100px;
+    margin-top: 80px;
+    margin-bottom: 10px;
     text-align: center;
-
-    margin-top: 100px;
     margin-right: auto;
-    margin-bottom: 100px;
     margin-left: auto;
 
-  text-shadow: 
-    -5px -5px 0 #3e7079,  /* Top-left shadow */
-    5px -5px 0 #3e7079,   /* Top-right shadow */
-    -5px 5px 0 #3e7079,   /* Bottom-left shadow */
-    5px 5px 0 #3e7079;    /* Bottom-right shadow */
 }
 
 html {
@@ -30,6 +86,10 @@ html {
   background-size: 100% 100%;
   min-height: 100dvh;
   width: 100%; 
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .zain-extralight {

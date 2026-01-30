@@ -3,6 +3,18 @@
 
 ! в какой-то момент, когда будет готово, добавить railways
 
+============== план
+
+1. сделать верстку для страницы поиска, для страницы выдачи, для поп-апа каждого ресторана
+2. добавить фронт -- данные из поиска -> корректная выдача
+3. создать бэк лк ПОЛНОСТЬЮ
+4. добавить верстку и фронт лк
+5. добавить коннекшн поп-апа ресторана и сохранения в лк
+6. добавить время на метро в бэк, затем во фронт
+7. добавить беслатное апи карт и добавить путь пешком
+8. порешать долбаёбские проблемы какие-нибудь
+9. деплой, to be continued...
+
 """
 
 from pathlib import Path
@@ -18,6 +30,7 @@ import requests
 import aiohttp
 from osrm import OsrmAsyncClient
 from django.db import connection
+from django.db import transaction
 
 DOMAIN = 'https://tabelog.com/'
 targeted_region = 'tokyo'
@@ -165,11 +178,6 @@ def get_page_contents(url):
 
     return name, station, rating, short_desc, long_desc, open_hours, fee, main_pic
 
-"""
-
-pgbouncer для единоразового подключения к бд
-
-"""
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
@@ -179,7 +187,7 @@ if str(BASE_DIR) not in sys.path:
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'project.settings')
 django.setup()
 
-
+@transaction.atomic
 def find_every_cross(start_line_id: str, end_line_id: str):
     """
     извлекает время из бд по длинным именам, находит все комбинации веток с 1-2 пересадкой
@@ -206,7 +214,7 @@ def find_every_cross(start_line_id: str, end_line_id: str):
 
         return (start_line_id, end_line_id, cross_list)
 
-
+@transaction.atomic
 def find_all_line_routes(start_station_id: str, cross_line: str, end_station_id: str):
 
     with connection.cursor() as cursor:
@@ -248,7 +256,7 @@ def find_all_line_routes(start_station_id: str, cross_line: str, end_station_id:
 
     return combinations
 
-
+@transaction.atomic
 def quickest_way(start: str, routes: list, end: str):
 
     quickest_count = 100
@@ -361,7 +369,7 @@ def quickest_way(start: str, routes: list, end: str):
 
     return time
 
-
+@transaction.atomic
 def home_to_restaurant_time(home_fullname: str, restaurant_fullname: str):
 
     # ищем все варианты станций, на которые можем спуститься в большой станции -- где несколько станций с одним именем

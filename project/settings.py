@@ -80,7 +80,8 @@ DATABASES = {
         'USER': 'natasha',
         'PASSWORD': 'hoesmad666-',
         'HOST': 'localhost',
-        'PORT': '5432',
+        'PORT': '6432',
+        'CONN_MAX_AGE': 0
     }
 }
 
