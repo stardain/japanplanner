@@ -1,4 +1,9 @@
 {% extends 'base.html' %}
+{% load static %}
+
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'analysis/restaurant_search.css' %}">
+{% endblock %}
 
 {% block header %}restaurant finder{% endblock %}
 

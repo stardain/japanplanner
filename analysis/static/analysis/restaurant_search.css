@@ -1,65 +1,26 @@
-body {
-  /* Set the size to be smaller than the HTML (the background) */
-  /* For example, 80% width/height leaves a 10% border on all sides */
-  width: 80%; 
-  height: 70%;
-  /* Reset default margins so centering works perfectly */
-  margin: 0;
-  /* Optional: Add a border to see where your content area is during testing */
-  border: 5px solid #F2F0EF;
-
+html {
+  background-image: url('background.png');
+  background-repeat: no-repeat;
+  background-position: center center; 
+  background-size: 100% 100%;
+  min-height: 100dvh;
+  width: 100%; 
   display: flex;
-  flex-wrap: wrap;      /* Allows forms to move to the next line */
-  justify-content: center; /* Centers the forms in every row */
-  gap: 20px;            /* Space between forms */
-  padding: 20px;
-
-}
-
-form {
-  flex: 0 1 calc(28% - 20px); 
-  box-sizing: border-box;
-  display: flex;
-  flex-direction: column; /* Stacks the checkbox groups vertically */
-  background-color: #F2F0EF; 
-  gap: 8px; 
-  padding: 6px; 
-  width: fit-content; 
-  border-radius: 8px;
+  justify-content: center;
   align-items: center;
 }
 
-.checkbox-item {
+body {
+  width: 80%; 
+  height: 70%;
+  margin: 0;
+  border: 5px solid #F2F0EF;
   display: flex;
-  align-items: center;    /* Vertically centers checkbox with text */
-  gap: 8px;               /* Space between box and text */
-}
-
-.row-full {
-  width: 100%;
-  display: flex;
+  flex-wrap: wrap;
   justify-content: center;
-  text-align: center;
-}
+  gap: 20px;
+  padding: 20px;
 
-.options-group {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start; /* Keeps checkboxes/labels starting at the same point */
-  width: max-content;      /* Only as wide as the longest option */
-  text-align: left;        /* Aligns text to the left */
-  gap: 8px;
-  margin: 30px;
-}
-
-p {
-  margin-top: 30px;
-  margin-bottom: 0px;
-  font-size: 18px;
-}
-
-label {
-  font-size: 18px;
 }
 
 h1 {
@@ -79,63 +40,42 @@ h1 {
 
 }
 
-html {
-  background-image: url('background.png');
-  background-repeat: no-repeat;
-  background-position: center center; 
-  background-size: 100% 100%;
-  min-height: 100dvh;
-  width: 100%; 
-
+form {
+  flex: 0 1 calc(28% - 20px); 
+  box-sizing: border-box;
   display: flex;
-  justify-content: center;
+  flex-direction: column; 
+  background-color: #F2F0EF; 
+  gap: 8px; 
+  padding: 6px; 
+  width: fit-content; 
+  border-radius: 8px;
   align-items: center;
 }
 
-.zain-extralight {
-  font-family: "Zain", sans-serif;
-  font-weight: 200;
-  font-style: normal;
+label {
+  font-size: 18px;
 }
 
-.zain-light {
-  font-family: "Zain", sans-serif;
-  font-weight: 300;
-  font-style: normal;
+.checkbox-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
-.zain-regular {
-  font-family: "Zain", sans-serif;
-  font-weight: 400;
-  font-style: normal;
+.row-full {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  text-align: center;
 }
 
-.zain-bold {
-  font-family: "Zain", sans-serif;
-  font-weight: 700;
-  font-style: normal;
-}
-
-.zain-extrabold {
-  font-family: "Zain", sans-serif;
-  font-weight: 800;
-  font-style: normal;
-}
-
-.zain-black {
-  font-family: "Zain", sans-serif;
-  font-weight: 900;
-  font-style: normal;
-}
-
-.zain-light-italic {
-  font-family: "Zain", sans-serif;
-  font-weight: 300;
-  font-style: italic;
-}
-
-.zain-regular-italic {
-  font-family: "Zain", sans-serif;
-  font-weight: 400;
-  font-style: italic;
+.options-group {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  width: max-content;
+  text-align: left;
+  gap: 8px;
+  margin: 30px;
 }
