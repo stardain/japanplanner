@@ -1,7 +1,26 @@
-p {
-  margin-top: 30px;
-  margin-bottom: 0px;
-  font-size: 18px;
+html {
+  background-image: url('background.png');
+  background-repeat: no-repeat;
+  background-position: center center; 
+  background-size: cover;
+  background-attachment: fixed; 
+  min-height: 100dvh;
+  width: 100%; 
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.corner-element {
+    position: fixed; 
+    top: 0;
+    right: 0;
+    padding: 15px;
+    background-color: aliceblue;
+    border-bottom-left-radius: 10px;
+    z-index: 9999;
+    text-decoration: none; 
+    font-family: "Zain", sans-serif;
 }
 
 .zain-extralight {

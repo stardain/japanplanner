@@ -1,0 +1,172 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load partials %}
+
+{% partialdef result-card %}
+    <div class="result-card" style="background: #F2F0EF; padding: 15px; border-radius: 8px;">
+        <img src="https://via.placeholder.com" alt="{{ item.name }}">
+        <h3>{{ item.name|default:"Restaurant Name" }}</h3>
+        <p>🕒 {{ item.travel_time|default:"15" }} mins away</p>
+        <p>⭐ Rating: {{ item.rating|default:"4.5" }}/5</p>
+    </div>
+{% endpartialdef %}
+
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'analysis/search_result.css' %}">
+{% endblock %}
+
+{% block content %}
+
+    <a href="/account/" class="corner-element">
+    мой аккаунт
+    </a>
+
+    <div id="saved-search"; class="main-container">
+        <!-- Column 1 -->
+        <form>
+            <p style="font-weight: bold; font-size: 18px;">специализация ресторана</p>
+            <div class="options-group">
+            <div class="checkbox-item">
+            <input type="radio" id="washoku" name="specialty" value="washoku">
+            <label for="washoku">японская классика</label><br>
+            </div>
+
+            <div class="checkbox-item">
+            <input type="radio" id="izakaya" name="specialty" value="izakaya">
+            <label for="izakaya">изакая</label><br>
+            </div>
+
+            <div class="checkbox-item">
+            <input type="radio" id="sushi_conveyor" name="specialty" value="sushi_conveyor">
+            <label for="sushi_conveyor">суши-конвейер</label><br>
+            </div>
+
+            <div class="checkbox-item">
+            <input type="radio" id="yakiniku" name="specialty" value="yakiniku">
+            <label for="yakiniku">жареное мясо</label><br>
+            </div>
+
+            <div class="checkbox-item">
+            <input type="radio" id="crab" name="specialty" value="crab">
+            <label for="crab">краб</label><br>
+            </div>
+
+            <div class="checkbox-item">
+            <input type="radio" id="green" name="specialty" value="green">
+            <label for="green">морепродукты</label><br>
+            </div>
+
+            <div class="checkbox-item">
+            <input type="radio" id="ramen" name="specialty" value="ramen">
+            <label for="ramen">рамен</label><br>
+            </div>
+            </div>
+        </form>
+
+        <!-- Column 2 -->
+        <form>
+            <p style="font-weight: bold;">пункты блаженства</p>
+
+            <div class="options-group">
+            <div class="checkbox-item">
+            <input type="checkbox" id="unlimited_drinks" name="additions" value="unlimited_drinks">
+            <label for="unlimited_drinks">безлимит алкоголь</label><br>
+            </div>
+
+            <div class="checkbox-item">
+            <input type="checkbox" id="unlimited_food" name="additions" value="unlimited_food">
+            <label for="unlimited_food">безлимит еда</label><br>
+            </div>
+
+            <div class="checkbox-item">
+            <input type="checkbox" id="smoking" name="additions" value="smoking">
+            <label for="smoking">курение is ok</label>
+            </div>
+
+            <div class="checkbox-item">
+            <input type="checkbox" id="sake" name="additions" value="sake">
+            <label for="sake">саке</label>
+            </div>
+
+            <div class="checkbox-item">
+            <input type="checkbox" id="shochu" name="additions" value="shochu">
+            <label for="shochu">сётю</label>
+            </div>
+            </div>
+        </form>
+
+        <!-- Column 3 (The Stack) -->
+        <div class="form-stack">
+
+            <form>
+            <p style="font-weight: bold;">лучшие по:</p>
+
+            <div class="options-group">
+            <div class="checkbox-item">
+            <input type="radio" id="by_locals" name="sorting" value="by_locals">
+            <label for="by_locals">фавориты местных</label><br>
+            </div>
+
+            <div class="checkbox-item">
+            <input type="radio" id="by_rating" name="sorting" value="by_rating">
+            <label for="by_rating">наивысшая оценка</label><br>
+            </div>
+
+            <div class="checkbox-item">
+            <input type="radio" id="by_reservations" name="sorting" value="by_reservations">
+            <label for="by_reservations">бронируют чаще всего</label><br>
+            </div>
+            </div>
+            </form>
+
+            <div style="background-color: #F2F0EF; 
+                            display: flex; 
+                            flex-direction: column; 
+                            gap: 8px; 
+                            padding: 15px; 
+                            border-radius: 8px;
+                            display: grid;
+                            justify-content: center;">
+                    <label for="address" style="font-weight: bold; font-size: 18px;">адрес проживания</label>
+                    <input type="text" id="address" required>
+                    <small style="font-size: 0.8rem; opacity: 0.8;">для подсчёта времени в дороге</small>
+            </div>
+
+            <form action="/submit-form" method="post"">
+            <label for="day-select" style="font-weight: bold; font-size: 18px;">запланированный день</label>
+            <select name="days" id="day-select" style="margin: 15px;">
+                <option value="">--выберите день--</option>
+                <option value="mon">понедельник</option>
+                <option value="tue">вторник</option>
+                <option value="wed">среда</option>
+                <option value="thu">четверг</option>
+                <option value="fri">пятница</option>
+                <option value="sat">суббота</option>
+                <option value="sun">воскресенье</option>
+            </select>
+            </form>
+
+        </div>
+
+        <button>искать</button>
+    </div>
+
+    <div style="border: 5px solid #F2F0EF; padding: 30px;">
+
+        <div class="results-grid">
+        {% with '12345' as dummy %}  {# Temporary loop for testing #}
+            {% for i in dummy %}
+                {% partial result-card %}
+            {% endfor %}
+        {% endwith %}
+
+        </div>
+
+        <br>
+
+        <button>далее</button>
+
+    </div>
+
+
+{% endblock %}

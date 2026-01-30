@@ -8,3 +8,7 @@ def index(request):
 def rest_search(request):
     context = {'my_variable': 'Hello from Django!'}
     return render(request, 'restaurant_search.html', context)
+
+def search_result(request):
+    context = {'my_variable': 'Hello from Django!'}
+    return render(request, 'search_result.html', context)

@@ -1,0 +1,49 @@
+body {
+    width: 38%;
+    height: 70%;
+    margin: 100px;
+}
+
+form {
+  background-color: #F2F0EF;
+  padding: 15px;
+  border-radius: 8px;
+  display: grid;
+  justify-content: center;
+}
+
+p {
+    margin: 3px;
+    font-size: 18px;
+    align-content: center;
+}
+
+button {
+    width: 100%;             /* Occupies the full width of the parent */
+    display: flex;           /* Enables flex alignment */
+    justify-content: center; /* Centers the button horizontally */
+    margin-top: 20px;        /* Optional: space above the button row */
+}
+
+.main-container {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr)); 
+  gap: 20px;
+  align-items: stretch; 
+  border: 5px solid #F2F0EF; 
+  padding: 30px;
+  height: 70%;
+}
+
+.main-container > button {
+    grid-column: 2;
+    display: flex;
+    justify-content: center;
+}
+
+.form-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  
+}
