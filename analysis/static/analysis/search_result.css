@@ -19,10 +19,26 @@ p {
 }
 
 button {
-    width: 100%;             /* Occupies the full width of the parent */
-    display: flex;           /* Enables flex alignment */
-    justify-content: center; /* Centers the button horizontally */
-    margin-top: 20px;        /* Optional: space above the button row */
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    margin-top: 20px;
+}
+
+.restaurant-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    width: 100%;
+}
+
+.restaurant-card h3, 
+.restaurant-card .rating, 
+.restaurant-card .time,
+.restaurant-card div {
+    width: 100%; 
+    box-sizing: border-box;
 }
 
 .main-container {

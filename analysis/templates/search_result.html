@@ -5,14 +5,18 @@
 {% partialdef result-card %}
     <div class="result-card" style="background: #F2F0EF; padding: 15px; border-radius: 8px;">
         <img src="https://via.placeholder.com" alt="{{ item.name }}">
-        <h3>{{ item.name|default:"Restaurant Name" }}</h3>
-        <p>🕒 {{ item.travel_time|default:"15" }} mins away</p>
-        <p>⭐ Rating: {{ item.rating|default:"4.5" }}/5</p>
+        <h3>{{ count }}. {{ item.name|default:"Japanese Dragon" }}</h3>
+        <p> {{ item.time|default:"10" }} минут в пути</p>
+        <p> рейтинг: {{ item.rating|default:"4.44" }}/5</p>
     </div>
 {% endpartialdef %}
 
 {% block extra_css %}
     <link rel="stylesheet" href="{% static 'analysis/search_result.css' %}">
+{% endblock %}
+
+{% block extra_head %}
+<script src="{% static 'analysis/search_result.js' %}"></script>
 {% endblock %}
 
 {% block content %}
@@ -151,20 +155,50 @@
         <button>искать</button>
     </div>
 
+
+    <script src="{% static 'analysis/search_result.js' %}">
+
+        window.DEFAULT_RESTAURANT_IMAGE = "{% static 'analysis/japanese_rest.jpg' %}";
+
+    </script>
+
+
     <div style="border: 5px solid #F2F0EF; padding: 30px;">
 
-        <div class="results-grid">
-        {% with '12345' as dummy %}  {# Temporary loop for testing #}
-            {% for i in dummy %}
-                {% partial result-card %}
-            {% endfor %}
-        {% endwith %}
+    <div class="results-grid">
+        {% for item in restaurants|default:"12345" %}
+            <div class="restaurant-card">
+            <h3 onclick="openDetails(this)" 
+                data-name="{{ item.name|escapejs }}"
+                data-time="{{ item.time|escapejs }}"
+                data-desc="{{ item.desc|escapejs }}"
+                data-image="{% static 'analysis/japanese_rest.jpg' %}"
+                style="cursor: pointer; color: black; text-decoration: underline;">
+
+                {% with count=forloop.counter %}
+                    {% partial result-card %}
+                {% endwith %}
+            </h3>
+            </div>
+        {% endfor %}
+    </div>
+
+        <button>далее</button>
 
         </div>
 
-        <br>
-
-        <button>далее</button>
+        <dialog id="restaurantModal">
+            <h2 id="modalRestName"></h2>
+            <p id="modalRating"></p>
+            <p id="modalSpecialty"></p>
+            <p id="modalOpenHours"></p>
+            <p id="modalStation"></p>
+            <p id="modalTime"></p>
+            <p id="modalDescription"></p>
+            <img id="modalImage" src="" alt="Restaurant Image" style="max-width: 100%; height: auto;">
+            <button id="modalSaveButton">в избранное</button>
+            <button id="modalCloseButton">закрыть</button>
+        </dialog>
 
     </div>
 
