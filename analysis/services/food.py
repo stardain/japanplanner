@@ -5,8 +5,16 @@
 
 ============== план
 
-1. сделать верстку для страницы поиска, для страницы выдачи, для поп-апа каждого ресторана
 2. добавить фронт -- данные из поиска -> корректная выдача
+
+- почитать нынешний код и причесать его
+- сделать выдачу инфы рестов словарём, а не кортежем
+- отредачить данные рестов чтобы они выглядели нормально
+- написать весь фронт (жс) для принятия данных в запросе -> открытия страницы результатов -> выдаче собранных рестов туда (проверить пока на 5)
+-- принимать в адресе пока что станцию метро, а не конкретный адрес
+-- изымать станцию из инфы реста -> считать путь -> возвращать подсчитанное в выдачу
+- добавить возможность перелистывать страниц и логику на фронте и бэке, что на каждой странице свои ресты (damn)
+
 3. создать бэк лк ПОЛНОСТЬЮ
 4. добавить верстку и фронт лк
 5. добавить коннекшн поп-апа ресторана и сохранения в лк
@@ -22,15 +30,35 @@ import re
 import json
 import sys
 import os
-import django
 from math import ceil
 import asyncio
+import random
+import time
+from urllib.parse import urlencode
+import django
 from bs4 import BeautifulSoup
 import requests
 import aiohttp
 from osrm import OsrmAsyncClient
 from django.db import connection
 from django.db import transaction
+
+HEADERS = {
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
+    'Accept-Language': 'ja-JP,ja;q=0.9,en-US;q=0.8,en;q=0.7',
+    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
+    'Referer': 'https://www.google.com/',
+    'Upgrade-Insecure-Requests': '1',
+    'Sec-Fetch-Dest': 'document',
+    'Sec-Fetch-Mode': 'navigate',
+    'Sec-Fetch-Site': 'cross-site',
+    'Sec-Fetch-User': '?1',
+    'Cache-Control': 'max-age=0',
+}
+
+API_KEY = '03735d65-c5c0-4c64-9871-ae924d6d9748'
+SCRAPEOPS_ENDPOINT = 'https://proxy.scrapeops.io/v1/'
+
 
 DOMAIN = 'https://tabelog.com/'
 targeted_region = 'tokyo'
@@ -79,104 +107,233 @@ def customize_search(choice):
     url_customized_event.set()
     return RESTAURANT_URL
 
-rests_asked = 3
-rests_actual_max = 100
-rests_limit = min(rests_actual_max, 100)
+data1 = '{"specialty": "japanese_cuisine", "sorting_method": "by_locals", "features": ["unlimited_food", "sake"]}'
+data2 = '{"specialty": "izakaya", "sorting_method": "by_locals", "features": ["unlimited_drinks", "sake"]}'
+data3 = '{"specialty": "grilled_meat", "sorting_method": "by_locals", "features": ["sake"]}'
+
+rests_asked = 5
+rests_actual_max = 50
+rests_limit = min(rests_actual_max, 50)
 rests_exact_num = min(rests_asked, rests_limit)
-#rests_exact_num = min(rests_asked, 100)
 exact_pages = ceil(rests_exact_num/20)
+
 all_pages = []
+all_restaurants_info = []
 
 def gather_all_urls(how_many_pages):
     """
     список страниц которые надо спарсить
     """
+    global all_pages
+    all_pages = []
     for page in range(1, how_many_pages+1):
         all_pages.append(RESTAURANT_URL + str(page) + '/' + FEATURES)
+    print("All URLs are gathered.")
 
-async def fetch_one_html(session, url):
+async def get_page_contents(session, url):
+
+    proxy_params = {
+        'api_key': API_KEY,
+        'url': url,
+        'country': 'jp',
+    }
+
+    scrapeops_url = f"{SCRAPEOPS_ENDPOINT}?{urlencode(proxy_params)}"
+
+    async with session.get(scrapeops_url, timeout=120, headers=HEADERS) as response:
+        html = await response.text()
+        soup = BeautifulSoup(html, 'lxml') 
+
+        # ИМЯ + КАТЕГОРИЯ + ОЦЕНКА
+        parent1 = soup.find("div", class_="rstdtl-header")
+        name = parent1.find("h2", class_="display-name").find('span').text
+        try:
+            short_desc = parent1.find("span", class_="pillow-word").text
+        except: 
+            short_desc = 0
+        rating = parent1.find("span", class_="rdheader-rating__score-val-dtl").text
+
+        # РАЙОН + БЛИЖАЙШАЯ СТАНЦИЯ
+        station = parent1.find("span", class_="linktree__parent-target-text").text
+
+        # ВРЕМЯ РАБОТЫ + КОГДА ЗАКРЫТО
+        parent2 = soup.find("ul", class_="rstinfo-table__business-list")
+        hours_raw = parent2.find_all("li", class_="rstinfo-table__business-item")
+        open_hours = {}
+
+        for weekday_list in hours_raw:
+            days = weekday_list.find("p", class_="rstinfo-table__business-title").text.strip().split(", ")
+            hours = [re.sub(r'\s+', " ", hour.text.replace("\n", " ")) for hour in weekday_list.find_all("li", class_="rstinfo-table__business-dtl-text")]
+            for day in days:
+                open_hours[day] = hours
+
+        try:
+            open_hours["Closed on"] = [soup.find("div", class_="rstinfo-table__business-other").text.split("on")[-1].strip()]
+        except:
+            open_hours["Closed on"] = None
+        
+        # КОМИССИИ
+
+        try:
+            fee = soup.find("table", class_="c-table c-table--form rstinfo-table__table").find_all("tr")[-1].find("p", class_=None).text
+        except:
+            fee = None
+
+        # ОПИСАНИЕ + ГЛАВНАЯ КАРТИНКА
+
+        try:
+            main_pic = soup.find("img", class_="p-main-photos__slider-image").get("src")
+        except:
+            main_pic = None
+        
+        try:
+            long_desc = soup.find("div", class_="pr-comment-wrap").text.strip()
+        except:
+            long_desc = None
+
+        return name, station, rating, short_desc, long_desc, open_hours, fee, main_pic
+
+async def the_great_scraper(page_urls: list):
     """
-    полностью скачать страницу 
-    """
-    async with session.get(url) as response:
-        return await response.text()
+    попробуем сейчас скинуть весь функционал функций выше сюда.
 
-def parse_all_rests_from_one_page(html):
-    """
-    извлечь только нужное со страницы т.е. все ссылки на рестораны
-    """
-    soup = BeautifulSoup(html, 'lxml')
-                          
-    return [rest['href'] for rest in soup.find_all("a", {"class": "list-rst__rst-name-target cpy-rst-name"}, href=True)]
-
-async def fetch_and_parse(session, url):
-    """
-    одновременно ебашит обе функции выше
-    """
-    html = await fetch_one_html(session, url)
-    return parse_all_rests_from_one_page(html)
-
-async def scrape_urls(urls: list):
-    """
-    делает основную работу
+    0. всё ниже происходит в одном открытом коннекшне
+    1. парсит страницу поиска -> await responce.text() в сессии
+    2. парсит все ресты со страницы поиска -> soup = BeautifulSoup(html, 'lxml') -> [rest['href'] for rest in soup.find_all("a", {"class": "list-rst__rst-name-target cpy-rst-name"}, href=True)]
+    результат -- все ссылки на нужное кол-во рестов
+    3. для каждой ссылки делает фулл парсинг, собирает нужное не сохраняя и сохраняет это нужное
     """
 
-    async def fix_max_number(htmls):
-        async with aiohttp.ClientSession() as sess:
-            page = await fetch_one_html(sess, htmls[0])
-            soup = BeautifulSoup(page, 'lxml')
-            return soup.find_all('span', class_='c-page-count__num')[-1].find('strong').text
+    ### фиксит количество нужных ресторанов, DONE
 
-    global rests_actual_max
-    rests_actual_max = await fix_max_number(urls)
+    async def fix_max_number(session, htmls, max_retries=5):
+        target_url = htmls[0] if isinstance(htmls, list) else htmls
+        
+        # 1. Define the Retry Loop
+        for attempt in range(max_retries):
+            try:
+                print(f"Attempt {attempt + 1} to get max restaurant count...")
+                
+                proxy_params = {
+                    'api_key': API_KEY,
+                    'url': target_url,
+                    'country': 'jp',
+                    'render_js': 'true',
+                    'wait_for_selector': '.c-page-count__num' # Force JS to finish
+                }
+                scrapeops_url = f"{SCRAPEOPS_ENDPOINT}?{urlencode(proxy_params)}"
 
-    await url_customized_event.wait()
-    async with aiohttp.ClientSession() as main_session:
-        all = await asyncio.gather(*[fetch_and_parse(main_session, url) for url in urls])
-        all_together = [rest for page in all for rest in page]
-        rests_correct_num = []
+                # Increase timeout slightly for each attempt
+                current_timeout = aiohttp.ClientTimeout(total=180 + (attempt * 30), sock_read=15)
+                
+                async with session.get(scrapeops_url, timeout=current_timeout) as response:
+                    if response.status != 200:
+                        print(f"Proxy returned {response.status}. Retrying...")
+                        continue # Try next attempt
 
-        for rest in range(rests_exact_num):
-            rests_correct_num.append(all_together[rest])
+                    chunks = []
+                    try:
+                        # Give the download more breathing room
+                        while True:
+                            chunk = await asyncio.wait_for(response.content.read(16384), timeout=10.0)
+                            if not chunk: break
+                            chunks.append(chunk)
+                    except asyncio.TimeoutError:
+                        pass # Move to parsing what we have
 
-        return rests_correct_num
+                    html_content = b"".join(chunks).decode('utf-8', 'ignore')
+                    if not html_content or len(html_content) < 500: # Basic check for valid HTML
+                        continue
 
-def get_page_contents(url):
-    r = requests.get(url, timeout=5)
-    soup = BeautifulSoup(r.content, 'lxml')
+                    soup = BeautifulSoup(html_content, 'lxml')
+                    # Try multiple selectors in case Tabelog changes the layout
+                    count_tag = soup.select('.c-page-count__num strong') or \
+                                soup.select('.list-rst__page-count strong')
+                    
+                    if count_tag:
+                        num_text = count_tag[-1].get_text(strip=True).replace(',', '')
+                        result = int(num_text)
+                        print(f"Success! Found: {result}")
+                        return result
 
-    # ИМЯ + КАТЕГОРИЯ + ОЦЕНКА
-    parent1 = soup.find("div", class_="rstdtl-header")
-    name = parent1.find("h2", class_="display-name").find('span').text
-    short_desc = parent1.find("span", class_="pillow-word").text
-    rating = parent1.find("span", class_="rdheader-rating__score-val-dtl").text
+            except Exception as e:
+                print(f"Attempt {attempt + 1} failed with error: {e}")
+            
+            # 2. Exponential Backoff: Wait longer before the next attempt
+            wait_time = (2 ** attempt) + random.uniform(1, 3)
+            print(f"Waiting {wait_time:.2f}s before retrying...")
+            await asyncio.sleep(wait_time)
 
-    # РАЙОН + БЛИЖАЙШАЯ СТАНЦИЯ
-    station = parent1.find("span", class_="linktree__parent-target-text").text
+        # 3. Final Fallback: If all else fails, return a safe default or raise an error
+        print("CRITICAL: All retries failed for max restaurant count.")
+        return 0 # Or raise Exception("Could not get restaurant count")
 
-    # ВРЕМЯ РАБОТЫ + КОГДА ЗАКРЫТО
-    parent2 = soup.find("ul", class_="rstinfo-table__business-list")
-    hours_raw = parent2.find_all("li", class_="rstinfo-table__business-item")
-    open_hours = {}
+    proxy_params = {
+        'api_key': API_KEY,
+        'url': 'https://tabelog.com',
+        'country': 'jp',
+        'render_js': 'true',
+    }
 
-    for weekday_list in hours_raw:
-        days = weekday_list.find("p", class_="rstinfo-table__business-title").text.strip().split(", ")
-        hours = [re.sub(r'\s+', " ", hour.text.replace("\n", " ")) for hour in weekday_list.find_all("li", class_="rstinfo-table__business-dtl-text")]
-        for day in days:
-            open_hours[day] = hours
+    ### собирает всю инфу для всех ресторанов
 
-    open_hours["Closed on"] = [soup.find("div", class_="rstinfo-table__business-other").text.split("on")[-1].strip()]
+    async with aiohttp.ClientSession() as session:
 
-    # КОМИССИИ
+        timeout = aiohttp.ClientTimeout(total=120)
+        all_restaurant_info = []
 
-    fee = soup.find("table", class_="c-table c-table--form rstinfo-table__table").find_all("tr")[-1].find("p", class_=None).text
+        global rests_actual_max, rests_exact_num, exact_pages, rests_limit
 
-    # ОПИСАНИЕ + ГЛАВНАЯ КАРТИНКА
+        rests_actual_max = await fix_max_number(session, page_urls)
+        rests_limit = min(rests_actual_max, 50)
+        rests_exact_num = min(rests_asked, rests_limit)
+        exact_pages = ceil(rests_exact_num/20)
 
-    main_pic = soup.find("img", class_="p-main-photos__slider-image").get("src")
-    long_desc = soup.find("div", class_="pr-comment-wrap").text.strip()
+        print(f"exactly this many restaurants -- {rests_exact_num}")
+        print(f"we download this many pages with 20 rests on them -- {exact_pages}")
 
-    return name, station, rating, short_desc, long_desc, open_hours, fee, main_pic
+        gather_all_urls(exact_pages)
+
+        await url_customized_event.wait()
+
+        for page in page_urls:
+
+            proxy_params['url'] = page
+
+            async with session.get(
+                url=SCRAPEOPS_ENDPOINT,
+                params=proxy_params,
+                timeout=timeout
+            ) as response:
+
+                search_page = await response.text()
+                soup = BeautifulSoup(search_page, 'lxml')
+
+                if rests_exact_num == 0:
+                    break
+
+                all_restaurant_links = [rest['href'] for rest in soup.find_all("a", {"class": "list-rst__rst-name-target cpy-rst-name"}, href=True)]
+                for link in all_restaurant_links:
+
+                    if rests_exact_num == 0:
+                        break
+
+                    info = await get_page_contents(session, link)
+                    all_restaurant_info.append(info)
+                    print("One rest appended!")
+
+                    rests_exact_num -= 1
+
+        return all_restaurant_info
+
+# формируем поиск
+customize_search(random.choice([data1, data2, data3]))
+print(RESTAURANT_URL)
+gather_all_urls(exact_pages)
+print(asyncio.run(the_great_scraper(all_pages)))
+
+
+
 
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
@@ -399,5 +556,3 @@ def home_to_restaurant_time(home_fullname: str, restaurant_fullname: str):
 
     return best_travel_time
 
-
-print(home_to_restaurant_time("Magome", "Shiodome"))
