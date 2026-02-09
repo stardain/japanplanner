@@ -1,3 +1,16 @@
+/* 
+
+1. механизм как инфа распределяется по ячейкам ресторанов
+2. механизм сохранения выбора на фильтрах наверху 
+3. кнопка запуска фильтра ещё раз (и тогда редирект сюда же/обновление данных внизу?)
+4. перелистывание страниц
+
+в будущем -- сохранение в избранное
+
+*/
+
+// 
+
 window.openDetails = function(element) {
     const modal = document.getElementById('restaurantModal');
     const name = document.getElementById('modalRestName');
@@ -33,3 +46,4 @@ document.addEventListener('DOMContentLoaded', () => {
         closeBtn.onclick = () => modal.close();
     }
 });
+

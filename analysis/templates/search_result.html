@@ -31,37 +31,44 @@
             <p style="font-weight: bold; font-size: 18px;">специализация ресторана</p>
             <div class="options-group">
             <div class="checkbox-item">
-            <input type="radio" id="washoku" name="specialty" value="washoku">
+            <input type="radio" id="washoku" name="specialty" value="washoku"
+            {% if request.GET.specialty == "washoku" %}checked{% endif %}>
             <label for="washoku">японская классика</label><br>
             </div>
 
             <div class="checkbox-item">
-            <input type="radio" id="izakaya" name="specialty" value="izakaya">
+            <input type="radio" id="izakaya" name="specialty" value="izakaya"
+            {% if request.GET.specialty == "izakaya" %}checked{% endif %}>
             <label for="izakaya">изакая</label><br>
             </div>
 
             <div class="checkbox-item">
-            <input type="radio" id="sushi_conveyor" name="specialty" value="sushi_conveyor">
+            <input type="radio" id="sushi_conveyor" name="specialty" value="sushi_conveyor"
+            {% if request.GET.specialty == "sushi_conveyor" %}checked{% endif %}>
             <label for="sushi_conveyor">суши-конвейер</label><br>
             </div>
 
             <div class="checkbox-item">
-            <input type="radio" id="yakiniku" name="specialty" value="yakiniku">
+            <input type="radio" id="yakiniku" name="specialty" value="yakiniku"
+            {% if request.GET.specialty == "yakiniku" %}checked{% endif %}>
             <label for="yakiniku">жареное мясо</label><br>
             </div>
 
             <div class="checkbox-item">
-            <input type="radio" id="crab" name="specialty" value="crab">
+            <input type="radio" id="crab" name="specialty" value="crab"
+            {% if request.GET.specialty == "crab" %}checked{% endif %}>
             <label for="crab">краб</label><br>
             </div>
 
             <div class="checkbox-item">
-            <input type="radio" id="green" name="specialty" value="green">
+            <input type="radio" id="seafood" name="specialty" value="seafood"
+            {% if request.GET.specialty == "seafood" %}checked{% endif %}>
             <label for="green">морепродукты</label><br>
             </div>
 
             <div class="checkbox-item">
-            <input type="radio" id="ramen" name="specialty" value="ramen">
+            <input type="radio" id="ramen" name="specialty" value="ramen"
+            {% if request.GET.specialty == "ramen" %}checked{% endif %}>
             <label for="ramen">рамен</label><br>
             </div>
             </div>
@@ -73,27 +80,32 @@
 
             <div class="options-group">
             <div class="checkbox-item">
-            <input type="checkbox" id="unlimited_drinks" name="additions" value="unlimited_drinks">
+            <input type="checkbox" id="unlimited_drinks" name="additions" value="unlimited_drinks"
+            {% if "unlimited_drinks" in additions %}checked{% endif %}>
             <label for="unlimited_drinks">безлимит алкоголь</label><br>
             </div>
 
             <div class="checkbox-item">
-            <input type="checkbox" id="unlimited_food" name="additions" value="unlimited_food">
+            <input type="checkbox" id="unlimited_food" name="additions" value="unlimited_food"
+            {% if "unlimited_food" in additions %}checked{% endif %}>
             <label for="unlimited_food">безлимит еда</label><br>
             </div>
 
             <div class="checkbox-item">
-            <input type="checkbox" id="smoking" name="additions" value="smoking">
+            <input type="checkbox" id="smoking" name="additions" value="smoking"
+            {% if "smoking" in additions %}checked{% endif %}>
             <label for="smoking">курение is ok</label>
             </div>
 
             <div class="checkbox-item">
-            <input type="checkbox" id="sake" name="additions" value="sake">
+            <input type="checkbox" id="sake" name="additions" value="sake"
+            {% if "sake" in additions %}checked{% endif %}>
             <label for="sake">саке</label>
             </div>
 
             <div class="checkbox-item">
-            <input type="checkbox" id="shochu" name="additions" value="shochu">
+            <input type="checkbox" id="shochu" name="additions" value="shochu"
+            {% if "shochu" in additions %}checked{% endif %}>
             <label for="shochu">сётю</label>
             </div>
             </div>
@@ -107,17 +119,20 @@
 
             <div class="options-group">
             <div class="checkbox-item">
-            <input type="radio" id="by_locals" name="sorting" value="by_locals">
+            <input type="radio" id="by_locals" name="sorting" value="by_locals"
+            {% if request.GET.sorting == "by_locals" %}checked{% endif %}>
             <label for="by_locals">фавориты местных</label><br>
             </div>
 
             <div class="checkbox-item">
-            <input type="radio" id="by_rating" name="sorting" value="by_rating">
+            <input type="radio" id="by_rating" name="sorting" value="by_rating"
+            {% if request.GET.sorting == "by_rating" %}checked{% endif %}>
             <label for="by_rating">наивысшая оценка</label><br>
             </div>
 
             <div class="checkbox-item">
-            <input type="radio" id="by_reservations" name="sorting" value="by_reservations">
+            <input type="radio" id="by_reservations" name="sorting" value="by_reservations"
+            {% if request.GET.sorting == "by_reservations" %}checked{% endif %}>
             <label for="by_reservations">бронируют чаще всего</label><br>
             </div>
             </div>
@@ -132,7 +147,7 @@
                             display: grid;
                             justify-content: center;">
                     <label for="address" style="font-weight: bold; font-size: 18px;">адрес проживания</label>
-                    <input type="text" id="address" required>
+                    <input type="text" id="address" value="{{ request.GET.address }}" required>
                     <small style="font-size: 0.8rem; opacity: 0.8;">для подсчёта времени в дороге</small>
             </div>
 
@@ -140,13 +155,13 @@
             <label for="day-select" style="font-weight: bold; font-size: 18px;">запланированный день</label>
             <select name="days" id="day-select" style="margin: 15px;">
                 <option value="">--выберите день--</option>
-                <option value="mon">понедельник</option>
-                <option value="tue">вторник</option>
-                <option value="wed">среда</option>
-                <option value="thu">четверг</option>
-                <option value="fri">пятница</option>
-                <option value="sat">суббота</option>
-                <option value="sun">воскресенье</option>
+                <option value="mon" {% if request.GET.day == "mon" %}selected{% endif %}>понедельник</option>
+                <option value="tue" {% if request.GET.day == "tue" %}selected{% endif %}>вторник</option>
+                <option value="wed" {% if request.GET.day == "wed" %}selected{% endif %}>среда</option>
+                <option value="thu" {% if request.GET.day == "thu" %}selected{% endif %}>четверг</option>
+                <option value="fri" {% if request.GET.day == "fri" %}selected{% endif %}>пятница</option>
+                <option value="sat" {% if request.GET.day == "sat" %}selected{% endif %}>суббота</option>
+                <option value="sun" {% if request.GET.day == "sun" %}selected{% endif %}>воскресенье</option>
             </select>
             </form>
 

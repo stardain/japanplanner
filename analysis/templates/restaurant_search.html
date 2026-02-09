@@ -1,6 +1,10 @@
 {% extends 'base.html' %}
 {% load static %}
 
+{% block extra_head %}
+    <script src="{% static 'analysis/restaurant_search.js' %}" defer></script>
+{% endblock %}
+
 {% block extra_css %}
     <link rel="stylesheet" href="{% static 'analysis/restaurant_search.css' %}">
 {% endblock %}
@@ -8,6 +12,8 @@
 {% block content %}
 
         <h1>restaurant finder</h1>
+
+        {% csrf_token %}
 
         <a href="/account/" class="corner-element">
         мой аккаунт
@@ -59,7 +65,7 @@
             </div>
 
             <div class="checkbox-item">
-            <input type="radio" id="green" name="specialty" value="green">
+            <input type="radio" id="seafood" name="specialty" value="seafood">
             <label for="green">морепродукты</label><br>
             </div>
 
@@ -152,7 +158,10 @@
         <br>
 
         <div class="row-full">
-            <button type="submit">Send</button>
+            <button type="submit" onclick="sendData()">
+                <span id="button-text">начать поиск</span>
+                <span id="spinner" style="display: none;">⌛ загрузка...</span>
+            </button>
         </div>
 
 

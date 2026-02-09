@@ -2,14 +2,12 @@
 кастомизирует поиск, собирает инфу о ресторанах, получает время пути до ресторана, выдаёт карточку ресторана
 
 ! в какой-то момент, когда будет готово, добавить railways
+! кнопка перевода ??
 
 ============== план
 
 2. добавить фронт -- данные из поиска -> корректная выдача
 
-- почитать нынешний код и причесать его
-- сделать выдачу инфы рестов словарём, а не кортежем
-- отредачить данные рестов чтобы они выглядели нормально
 - написать весь фронт (жс) для принятия данных в запросе -> открытия страницы результатов -> выдаче собранных рестов туда (проверить пока на 5)
 -- принимать в адресе пока что станцию метро, а не конкретный адрес
 -- изымать станцию из инфы реста -> считать путь -> возвращать подсчитанное в выдачу
@@ -143,73 +141,64 @@ async def get_page_contents(session, url):
     async with session.get(scrapeops_url, timeout=120, headers=HEADERS) as response:
         html = await response.text()
         soup = BeautifulSoup(html, 'lxml') 
+        data = {}
 
         # ИМЯ + КАТЕГОРИЯ + ОЦЕНКА
         parent1 = soup.find("div", class_="rstdtl-header")
-        name = parent1.find("h2", class_="display-name").find('span').text
+        data["name"] = parent1.find("h2", class_="display-name").find('span').get_text(strip=True)
+        data["rating"] = parent1.find("span", class_="rdheader-rating__score-val-dtl").get_text(strip=True)
+
         try:
-            short_desc = parent1.find("span", class_="pillow-word").text
-        except: 
-            short_desc = 0
-        rating = parent1.find("span", class_="rdheader-rating__score-val-dtl").text
+            data["short_desc"] = parent1.find("span", class_="pillow-word").get_text(strip=True)
+        except Exception: 
+            data["short_desc"] = 0
 
         # РАЙОН + БЛИЖАЙШАЯ СТАНЦИЯ
-        station = parent1.find("span", class_="linktree__parent-target-text").text
+        data["station"] = parent1.find("span", class_="linktree__parent-target-text").get_text(strip=True)
 
         # ВРЕМЯ РАБОТЫ + КОГДА ЗАКРЫТО
         parent2 = soup.find("ul", class_="rstinfo-table__business-list")
-        hours_raw = parent2.find_all("li", class_="rstinfo-table__business-item")
+        data["hours_raw"] = parent2.find_all("li", class_="rstinfo-table__business-item")
         open_hours = {}
-
         for weekday_list in hours_raw:
-            days = weekday_list.find("p", class_="rstinfo-table__business-title").text.strip().split(", ")
+            days = weekday_list.find("p", class_="rstinfo-table__business-title").get_text(strip=True).split(", ")
             hours = [re.sub(r'\s+', " ", hour.text.replace("\n", " ")) for hour in weekday_list.find_all("li", class_="rstinfo-table__business-dtl-text")]
             for day in days:
                 open_hours[day] = hours
 
         try:
-            open_hours["Closed on"] = [soup.find("div", class_="rstinfo-table__business-other").text.split("on")[-1].strip()]
-        except:
+            open_hours["Closed on"] = [soup.find("div", class_="rstinfo-table__business-other").get_text(strip=True).split("on")[-1]]
+        except Exception:
             open_hours["Closed on"] = None
         
+        data["open_hours"] = open_hours
+
         # КОМИССИИ
 
         try:
-            fee = soup.find("table", class_="c-table c-table--form rstinfo-table__table").find_all("tr")[-1].find("p", class_=None).text
+            data['fee'] = soup.find("table", class_="c-table c-table--form rstinfo-table__table").find_all("tr")[-1].find("p", class_=None).get_text(strip=True)
         except:
-            fee = None
+            data['fee'] = None
 
         # ОПИСАНИЕ + ГЛАВНАЯ КАРТИНКА
 
         try:
-            main_pic = soup.find("img", class_="p-main-photos__slider-image").get("src")
+            data['main_pic'] = soup.find("img", class_="p-main-photos__slider-image").get("src")
         except:
-            main_pic = None
+            data['main_pic'] = None
         
         try:
-            long_desc = soup.find("div", class_="pr-comment-wrap").text.strip()
+            data['long_desc'] = soup.find("div", class_="pr-comment-wrap").get_text(strip=True)
         except:
-            long_desc = None
+            data['long_desc'] = None
 
-        return name, station, rating, short_desc, long_desc, open_hours, fee, main_pic
+        return data
 
 async def the_great_scraper(page_urls: list):
-    """
-    попробуем сейчас скинуть весь функционал функций выше сюда.
-
-    0. всё ниже происходит в одном открытом коннекшне
-    1. парсит страницу поиска -> await responce.text() в сессии
-    2. парсит все ресты со страницы поиска -> soup = BeautifulSoup(html, 'lxml') -> [rest['href'] for rest in soup.find_all("a", {"class": "list-rst__rst-name-target cpy-rst-name"}, href=True)]
-    результат -- все ссылки на нужное кол-во рестов
-    3. для каждой ссылки делает фулл парсинг, собирает нужное не сохраняя и сохраняет это нужное
-    """
-
-    ### фиксит количество нужных ресторанов, DONE
 
     async def fix_max_number(session, htmls, max_retries=5):
         target_url = htmls[0] if isinstance(htmls, list) else htmls
         
-        # 1. Define the Retry Loop
         for attempt in range(max_retries):
             try:
                 print(f"Attempt {attempt + 1} to get max restaurant count...")
@@ -219,54 +208,50 @@ async def the_great_scraper(page_urls: list):
                     'url': target_url,
                     'country': 'jp',
                     'render_js': 'true',
-                    'wait_for_selector': '.c-page-count__num' # Force JS to finish
+                    'wait_for_selector': '.c-page-count__num'
                 }
                 scrapeops_url = f"{SCRAPEOPS_ENDPOINT}?{urlencode(proxy_params)}"
 
-                # Increase timeout slightly for each attempt
                 current_timeout = aiohttp.ClientTimeout(total=180 + (attempt * 30), sock_read=15)
                 
                 async with session.get(scrapeops_url, timeout=current_timeout) as response:
                     if response.status != 200:
                         print(f"Proxy returned {response.status}. Retrying...")
-                        continue # Try next attempt
+                        continue
 
                     chunks = []
                     try:
-                        # Give the download more breathing room
                         while True:
                             chunk = await asyncio.wait_for(response.content.read(16384), timeout=10.0)
-                            if not chunk: break
+                            if not chunk:
+                                break
                             chunks.append(chunk)
                     except asyncio.TimeoutError:
-                        pass # Move to parsing what we have
+                        pass
 
                     html_content = b"".join(chunks).decode('utf-8', 'ignore')
-                    if not html_content or len(html_content) < 500: # Basic check for valid HTML
+                    if not html_content or len(html_content) < 500:
                         continue
 
                     soup = BeautifulSoup(html_content, 'lxml')
-                    # Try multiple selectors in case Tabelog changes the layout
                     count_tag = soup.select('.c-page-count__num strong') or \
                                 soup.select('.list-rst__page-count strong')
                     
                     if count_tag:
                         num_text = count_tag[-1].get_text(strip=True).replace(',', '')
                         result = int(num_text)
-                        print(f"Success! Found: {result}")
+                        print(f"Found an exact limit: {result}")
                         return result
 
             except Exception as e:
                 print(f"Attempt {attempt + 1} failed with error: {e}")
             
-            # 2. Exponential Backoff: Wait longer before the next attempt
             wait_time = (2 ** attempt) + random.uniform(1, 3)
             print(f"Waiting {wait_time:.2f}s before retrying...")
             await asyncio.sleep(wait_time)
 
-        # 3. Final Fallback: If all else fails, return a safe default or raise an error
         print("CRITICAL: All retries failed for max restaurant count.")
-        return 0 # Or raise Exception("Could not get restaurant count")
+        return 0
 
     proxy_params = {
         'api_key': API_KEY,
@@ -326,15 +311,13 @@ async def the_great_scraper(page_urls: list):
 
         return all_restaurant_info
 
-# формируем поиск
-customize_search(random.choice([data1, data2, data3]))
-print(RESTAURANT_URL)
-gather_all_urls(exact_pages)
-print(asyncio.run(the_great_scraper(all_pages)))
+# ТЕСТ
+#customize_search(random.choice([data1, data2, data3]))
+#print(RESTAURANT_URL)
+#gather_all_urls(exact_pages)
+#print(asyncio.run(the_great_scraper(all_pages)))
 
-
-
-
+###
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
