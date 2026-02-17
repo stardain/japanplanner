@@ -1,32 +1,33 @@
 /* 
-1. кнопка отправки
-2. сохранения всех выборов в фильтрах + адреса
 
-будущее -- кнопка сохранения
+
+
 */
+
+alert("JS is alive!");
 
 const token = document.querySelector('[name=csrfmiddlewaretoken]').value;
 
-const checkedBoxes = document.querySelectorAll('input[name="additions"]:checked');
-const selectedAdditions = Array.from(checkedBoxes).map(cb => cb.value);
-
 function sendData() {
+    const checkedBoxes = document.querySelectorAll('input[name="additions"]:checked');
+    const selectedAdditions = Array.from(checkedBoxes).map(cb => cb.value);
+
     const data = {
 
-        amount: document.getElementByID('amount').value,
+        amount: document.getElementById('amount').value,
         specialty: document.querySelector('input[name="specialty"]:checked')?.value || '',
         additions: selectedAdditions,
         sorting: document.querySelector('input[name="sorting"]:checked')?.value || '',
-        address: document.getElementByID('address').value,
-        day: document.getElementByID('day-select').value,
+        address: document.getElementById('address').value,
+        day: document.getElementById('day-select').value,
 
     };
 
-    btn.disabled = true;
-    btnText.style.display = 'none';
+    searchbutton.disabled = true;
+    buttontext.style.display = 'none';
     spinner.style.display = 'inline';
 
-    fetch('/rest_search/', {
+    fetch('/analysis/rest_search/', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -45,8 +46,16 @@ function sendData() {
     .catch(error => console.error("Error:", error))
     .finally(() => {
         // --- STEP B: RESET BUTTON (Happens on Success OR Error) ---
-        btn.disabled = false;
-        btnText.style.display = 'inline';
+        searchbutton.disabled = false;
+        buttontext.style.display = 'inline';
         spinner.style.display = 'none';
     });
 }
+
+document.addEventListener('DOMContentLoaded', () => {
+    const btn = document.getElementById('searchbutton'); // Ensure your HTML button ID is 'button'
+    if (btn) {
+        btn.addEventListener('click', sendData);
+        console.log("EventListener attached to the button!");
+    }
+});

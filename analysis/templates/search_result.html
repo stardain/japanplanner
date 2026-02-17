@@ -4,10 +4,10 @@
 
 {% partialdef result-card %}
     <div class="result-card" style="background: #F2F0EF; padding: 15px; border-radius: 8px;">
-        <img src="https://via.placeholder.com" alt="{{ item.name }}">
-        <h3>{{ count }}. {{ item.name|default:"Japanese Dragon" }}</h3>
-        <p> {{ item.time|default:"10" }} минут в пути</p>
-        <p> рейтинг: {{ item.rating|default:"4.44" }}/5</p>
+        <img src="https://via.placeholder.com" alt="{{ item.main_pic }}">
+        <h3>{{ count }}. {{ rest.name|default:"Japanese Dragon" }}</h3>
+        <p> {{ rest.station|default:"10" }} минут в пути</p>
+        <p> рейтинг: {{ rest.rating|default:"4.44" }}/5</p>
     </div>
 {% endpartialdef %}
 
@@ -32,43 +32,43 @@
             <div class="options-group">
             <div class="checkbox-item">
             <input type="radio" id="washoku" name="specialty" value="washoku"
-            {% if request.GET.specialty == "washoku" %}checked{% endif %}>
+            {% if filters.spec == "washoku" %}checked{% endif %}>
             <label for="washoku">японская классика</label><br>
             </div>
 
             <div class="checkbox-item">
             <input type="radio" id="izakaya" name="specialty" value="izakaya"
-            {% if request.GET.specialty == "izakaya" %}checked{% endif %}>
+            {% if filters.spec == "izakaya" %}checked{% endif %}>
             <label for="izakaya">изакая</label><br>
             </div>
 
             <div class="checkbox-item">
             <input type="radio" id="sushi_conveyor" name="specialty" value="sushi_conveyor"
-            {% if request.GET.specialty == "sushi_conveyor" %}checked{% endif %}>
+            {% if filters.spec == "sushi_conveyor" %}checked{% endif %}>
             <label for="sushi_conveyor">суши-конвейер</label><br>
             </div>
 
             <div class="checkbox-item">
             <input type="radio" id="yakiniku" name="specialty" value="yakiniku"
-            {% if request.GET.specialty == "yakiniku" %}checked{% endif %}>
+            {% if filters.spec == "yakiniku" %}checked{% endif %}>
             <label for="yakiniku">жареное мясо</label><br>
             </div>
 
             <div class="checkbox-item">
             <input type="radio" id="crab" name="specialty" value="crab"
-            {% if request.GET.specialty == "crab" %}checked{% endif %}>
+            {% if filters.spec == "crab" %}checked{% endif %}>
             <label for="crab">краб</label><br>
             </div>
 
             <div class="checkbox-item">
             <input type="radio" id="seafood" name="specialty" value="seafood"
-            {% if request.GET.specialty == "seafood" %}checked{% endif %}>
+            {% if filters.spec == "seafood" %}checked{% endif %}>
             <label for="green">морепродукты</label><br>
             </div>
 
             <div class="checkbox-item">
             <input type="radio" id="ramen" name="specialty" value="ramen"
-            {% if request.GET.specialty == "ramen" %}checked{% endif %}>
+            {% if filters.spec == "ramen" %}checked{% endif %}>
             <label for="ramen">рамен</label><br>
             </div>
             </div>
@@ -81,31 +81,31 @@
             <div class="options-group">
             <div class="checkbox-item">
             <input type="checkbox" id="unlimited_drinks" name="additions" value="unlimited_drinks"
-            {% if "unlimited_drinks" in additions %}checked{% endif %}>
+            {% if "unlimited_drinks" in filters.adds %}checked{% endif %}>
             <label for="unlimited_drinks">безлимит алкоголь</label><br>
             </div>
 
             <div class="checkbox-item">
             <input type="checkbox" id="unlimited_food" name="additions" value="unlimited_food"
-            {% if "unlimited_food" in additions %}checked{% endif %}>
+            {% if "unlimited_food" in filters.adds %}checked{% endif %}>
             <label for="unlimited_food">безлимит еда</label><br>
             </div>
 
             <div class="checkbox-item">
             <input type="checkbox" id="smoking" name="additions" value="smoking"
-            {% if "smoking" in additions %}checked{% endif %}>
+            {% if "smoking" in filters.adds %}checked{% endif %}>
             <label for="smoking">курение is ok</label>
             </div>
 
             <div class="checkbox-item">
             <input type="checkbox" id="sake" name="additions" value="sake"
-            {% if "sake" in additions %}checked{% endif %}>
+            {% if "sake" in filters.adds %}checked{% endif %}>
             <label for="sake">саке</label>
             </div>
 
             <div class="checkbox-item">
             <input type="checkbox" id="shochu" name="additions" value="shochu"
-            {% if "shochu" in additions %}checked{% endif %}>
+            {% if "shochu" in filters.adds %}checked{% endif %}>
             <label for="shochu">сётю</label>
             </div>
             </div>
@@ -120,19 +120,19 @@
             <div class="options-group">
             <div class="checkbox-item">
             <input type="radio" id="by_locals" name="sorting" value="by_locals"
-            {% if request.GET.sorting == "by_locals" %}checked{% endif %}>
+            {% if filters.sort == "by_locals" %}checked{% endif %}>
             <label for="by_locals">фавориты местных</label><br>
             </div>
 
             <div class="checkbox-item">
             <input type="radio" id="by_rating" name="sorting" value="by_rating"
-            {% if request.GET.sorting == "by_rating" %}checked{% endif %}>
+            {% if filters.sort == "by_rating" %}checked{% endif %}>
             <label for="by_rating">наивысшая оценка</label><br>
             </div>
 
             <div class="checkbox-item">
             <input type="radio" id="by_reservations" name="sorting" value="by_reservations"
-            {% if request.GET.sorting == "by_reservations" %}checked{% endif %}>
+            {% if filters.sort == "by_reservations" %}checked{% endif %}>
             <label for="by_reservations">бронируют чаще всего</label><br>
             </div>
             </div>
@@ -147,7 +147,7 @@
                             display: grid;
                             justify-content: center;">
                     <label for="address" style="font-weight: bold; font-size: 18px;">адрес проживания</label>
-                    <input type="text" id="address" value="{{ request.GET.address }}" required>
+                    <input type="text" id="address" value="{{ filters.address }}" required>
                     <small style="font-size: 0.8rem; opacity: 0.8;">для подсчёта времени в дороге</small>
             </div>
 
@@ -155,13 +155,13 @@
             <label for="day-select" style="font-weight: bold; font-size: 18px;">запланированный день</label>
             <select name="days" id="day-select" style="margin: 15px;">
                 <option value="">--выберите день--</option>
-                <option value="mon" {% if request.GET.day == "mon" %}selected{% endif %}>понедельник</option>
-                <option value="tue" {% if request.GET.day == "tue" %}selected{% endif %}>вторник</option>
-                <option value="wed" {% if request.GET.day == "wed" %}selected{% endif %}>среда</option>
-                <option value="thu" {% if request.GET.day == "thu" %}selected{% endif %}>четверг</option>
-                <option value="fri" {% if request.GET.day == "fri" %}selected{% endif %}>пятница</option>
-                <option value="sat" {% if request.GET.day == "sat" %}selected{% endif %}>суббота</option>
-                <option value="sun" {% if request.GET.day == "sun" %}selected{% endif %}>воскресенье</option>
+                <option value="mon" {% if filters.day == "mon" %}selected{% endif %}>понедельник</option>
+                <option value="tue" {% if filters.day == "tue" %}selected{% endif %}>вторник</option>
+                <option value="wed" {% if filters.day == "wed" %}selected{% endif %}>среда</option>
+                <option value="thu" {% if filters.day == "thu" %}selected{% endif %}>четверг</option>
+                <option value="fri" {% if filters.day == "fri" %}selected{% endif %}>пятница</option>
+                <option value="sat" {% if filters.day == "sat" %}selected{% endif %}>суббота</option>
+                <option value="sun" {% if filters.day == "sun" %}selected{% endif %}>воскресенье</option>
             </select>
             </form>
 
@@ -180,14 +180,22 @@
 
     <div style="border: 5px solid #F2F0EF; padding: 30px;">
 
+    {% static 'analysis/japanese_rest.jpg' as default_img %}
+
     <div class="results-grid">
-        {% for item in restaurants|default:"12345" %}
+        {% for rest in restaurants|default:"12345" %}
             <div class="restaurant-card">
             <h3 onclick="openDetails(this)" 
-                data-name="{{ item.name|escapejs }}"
-                data-time="{{ item.time|escapejs }}"
-                data-desc="{{ item.desc|escapejs }}"
-                data-image="{% static 'analysis/japanese_rest.jpg' %}"
+                data-name="{{ rest.name|escapejs }}"
+                data-rating="{{ rest.rating|escapejs }}"
+                data-short-desc="{{ rest.short_desc|escapejs }}"
+                data-station="{{ rest.station|escapejs }}"
+                data-hours-raw="{{ rest.hours_raw|escapejs }}"
+                data-closed-on="{{ rest.closed_on|escapejs }}"
+                data-open-hours="{{ rest.open_hours|escapejs }}"
+                data-fee="{{ rest.fee|escapejs }}"
+                data-long-desc="{{ rest.long_desc|escapejs }}"
+                data-main-pic="{{ rest.main_pic|default:default_img }}"
                 style="cursor: pointer; color: black; text-decoration: underline;">
 
                 {% with count=forloop.counter %}
@@ -205,11 +213,13 @@
         <dialog id="restaurantModal">
             <h2 id="modalRestName"></h2>
             <p id="modalRating"></p>
-            <p id="modalSpecialty"></p>
-            <p id="modalOpenHours"></p>
+            <p id="modalShortDesc"></p>
             <p id="modalStation"></p>
+            <p id="modalClosedOn"></p>
+            <p id="modalOpenHours"></p>
+            <p id="modalFee"></p>
             <p id="modalTime"></p>
-            <p id="modalDescription"></p>
+            <p id="modalLongDesc"></p>
             <img id="modalImage" src="" alt="Restaurant Image" style="max-width: 100%; height: auto;">
             <button id="modalSaveButton">в избранное</button>
             <button id="modalCloseButton">закрыть</button>

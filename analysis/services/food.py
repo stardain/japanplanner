@@ -8,10 +8,13 @@
 
 2. добавить фронт -- данные из поиска -> корректная выдача
 
-- написать весь фронт (жс) для принятия данных в запросе -> открытия страницы результатов -> выдаче собранных рестов туда (проверить пока на 5)
--- принимать в адресе пока что станцию метро, а не конкретный адрес
--- изымать станцию из инфы реста -> считать путь -> возвращать подсчитанное в выдачу
-- добавить возможность перелистывать страниц и логику на фронте и бэке, что на каждой странице свои ресты (damn)
+!
+задачи бэк + фронт:
+-- дополнить вью функциями подсчёта времени (поставить дефолт, отредачить строку; станция изымается из инфы реста, как это сделать?)
+-- сделать работающей кнопку повторного запуска фильтра на странице выдачи
+-- создать логику перелистывания страниц и соотношение её с количеством ресторанов (5 на каждой)
+-- прихорошить данные ресторанов + разложить их по попапу красиво
+!
 
 3. создать бэк лк ПОЛНОСТЬЮ
 4. добавить верстку и фронт лк
@@ -60,22 +63,22 @@ SCRAPEOPS_ENDPOINT = 'https://proxy.scrapeops.io/v1/'
 
 DOMAIN = 'https://tabelog.com/'
 targeted_region = 'tokyo'
-RESTAURANT_URL = 'https://tabelog.com/en/' + targeted_region + "/rstLst/"
+RESTAURANT_URL = 'https://tabelog.com/en/tokyo/rstLst/'
 FEATURES = ""
 url_customized_event = asyncio.Event()
 
-def customize_search(choice):
+def customize_search(choice: dict):
 
     global RESTAURANT_URL, FEATURES
 
     specialty_dict = {
-        "japanese_cuisine": "washoku/",
-        "izakaya": "izakaya/", 
-        "sushi_conveyor": "RC010202/", 
-        "crab": "RC011213/", 
-        "seafood": "seafood/", 
-        "ramen": "ramen/", 
-        "grilled_meat": "yakiniku/"
+        "washoku": "washoku",
+        "izakaya": "izakaya", 
+        "sushi_conveyor": "RC010202", 
+        "crab": "RC011213", 
+        "seafood": "seafood", 
+        "ramen": "ramen", 
+        "yakiniku": "yakiniku"
     }
 
     sorting_dict = {
@@ -92,18 +95,18 @@ def customize_search(choice):
         "shochu": "ChkShochu=1"
     }
 
-    full_custom = json.loads(choice)
+    #full_custom = json.loads(choice)
 
-    RESTAURANT_URL = RESTAURANT_URL + specialty_dict[full_custom["specialty"]]
-    custom_features = "?utf8=✓&" + sorting_dict[full_custom["sorting_method"]] + "&"
+    search_url = RESTAURANT_URL + specialty_dict[choice["spec"]] + "/"
+    custom_features = "?utf8=✓&" + sorting_dict[choice["sort"]] + "&"
 
-    for feature in full_custom["features"]:
-        custom_features += features_dict[feature]
+    for addition in choice["adds"]:
+        custom_features += features_dict[addition]
         custom_features += "&"
 
     FEATURES = custom_features
     url_customized_event.set()
-    return RESTAURANT_URL
+    return search_url
 
 data1 = '{"specialty": "japanese_cuisine", "sorting_method": "by_locals", "features": ["unlimited_food", "sake"]}'
 data2 = '{"specialty": "izakaya", "sorting_method": "by_locals", "features": ["unlimited_drinks", "sake"]}'
@@ -118,15 +121,17 @@ exact_pages = ceil(rests_exact_num/20)
 all_pages = []
 all_restaurants_info = []
 
-def gather_all_urls(how_many_pages):
+def gather_all_urls(how_many_pages, search_url):
     """
     список страниц которые надо спарсить
     """
     global all_pages
     all_pages = []
-    for page in range(1, how_many_pages+1):
-        all_pages.append(RESTAURANT_URL + str(page) + '/' + FEATURES)
+    for page in range(1, int(how_many_pages)+1):
+        all_pages.append(search_url + str(page) + '/' + FEATURES)
     print("All URLs are gathered.")
+
+    return all_pages
 
 async def get_page_contents(session, url):
 
@@ -160,16 +165,16 @@ async def get_page_contents(session, url):
         parent2 = soup.find("ul", class_="rstinfo-table__business-list")
         data["hours_raw"] = parent2.find_all("li", class_="rstinfo-table__business-item")
         open_hours = {}
-        for weekday_list in hours_raw:
+        for weekday_list in data["hours_raw"]:
             days = weekday_list.find("p", class_="rstinfo-table__business-title").get_text(strip=True).split(", ")
             hours = [re.sub(r'\s+', " ", hour.text.replace("\n", " ")) for hour in weekday_list.find_all("li", class_="rstinfo-table__business-dtl-text")]
             for day in days:
                 open_hours[day] = hours
 
         try:
-            open_hours["Closed on"] = [soup.find("div", class_="rstinfo-table__business-other").get_text(strip=True).split("on")[-1]]
+            open_hours["closed_on"] = [soup.find("div", class_="rstinfo-table__business-other").get_text(strip=True).split("on")[-1]]
         except Exception:
-            open_hours["Closed on"] = None
+            open_hours["closed_on"] = None
         
         data["open_hours"] = open_hours
 
@@ -277,7 +282,7 @@ async def the_great_scraper(page_urls: list):
         print(f"exactly this many restaurants -- {rests_exact_num}")
         print(f"we download this many pages with 20 rests on them -- {exact_pages}")
 
-        gather_all_urls(exact_pages)
+        gather_all_urls(exact_pages, RESTAURANT_URL)
 
         await url_customized_event.wait()
 
@@ -299,6 +304,8 @@ async def the_great_scraper(page_urls: list):
 
                 all_restaurant_links = [rest['href'] for rest in soup.find_all("a", {"class": "list-rst__rst-name-target cpy-rst-name"}, href=True)]
                 for link in all_restaurant_links:
+
+                    print(f"link is -- {link}")
 
                     if rests_exact_num == 0:
                         break

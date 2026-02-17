@@ -1,37 +1,34 @@
 /* 
 
-1. механизм как инфа распределяется по ячейкам ресторанов
-2. механизм сохранения выбора на фильтрах наверху 
-3. кнопка запуска фильтра ещё раз (и тогда редирект сюда же/обновление данных внизу?)
-4. перелистывание страниц
 
-в будущем -- сохранение в избранное
 
 */
-
-// 
 
 window.openDetails = function(element) {
     const modal = document.getElementById('restaurantModal');
     const name = document.getElementById('modalRestName');
     const rating = document.getElementById('modalRating');
-    const specialty = document.getElementById('modalSpecialty');
-    const openhours = document.getElementById('modalOpenHours');
-    const station = document.getElementById('modalStation');
+    const shortDesc = document.getElementById('modalShortDesc');
+    const longDesc = document.getElementById('modalLongDesc');
     const time = document.getElementById('modalTime');
-    const desc = document.getElementById('modalDescription');
+    const station = document.getElementById('modalStation');
+    const openHours = document.getElementById('modalOpenHours');
+    const closedOn = document.getElementById('modalClosedOn');
+    const fee = document.getElementById('modalFee');
     const image = document.getElementById('modalImage');
 
     if (modal) {
         // наполняют консты выше, которые эту инфу кладут в попап
         name.textContent = element.dataset.name || "Японский Дракон";
-        time.textContent = (element.dataset.time || "30") + " минут в пути";
         rating.textContent = (element.dataset.rating || "3") + " / 4";
-        specialty.textContent = element.dataset.specialty || "хорош во всём";
-        openhours.textContent = element.dataset.openhours || "открыт всегда";
-        station.textContent = element.dataset.station || "центр токио хз что за станция";
-        desc.textContent = element.dataset.desc || "просто ресторан нечего сказать абсолютно";
-        image.src = element.dataset.image;
+        shortDesc.textContent = element.dataset.shortDesc || "просто ресторан нечего сказать абсолютно";
+        longDesc.textContent = element.dataset.longDesc || "просто ресторан нечего сказать абсолютно";
+        time.textContent = (element.dataset.time || "30") + " минут в пути";
+        station.textContent = element.dataset.station || "левая станция";
+        openHours.textContent = element.dataset.openHours || "открыт всегда";
+        closedOn.textContent = element.dataset.closedOn || "закрыт всегда";
+        fee.textContent = element.dataset.fee || "50 рублей на чаевые";
+        image.src = element.dataset.mainPic;
 
         modal.showModal();
     } else {

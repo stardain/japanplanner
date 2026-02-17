@@ -66,7 +66,7 @@
 
             <div class="checkbox-item">
             <input type="radio" id="seafood" name="specialty" value="seafood">
-            <label for="green">морепродукты</label><br>
+            <label for="seafood">морепродукты</label><br>
             </div>
 
             <div class="checkbox-item">
@@ -158,11 +158,12 @@
         <br>
 
         <div class="row-full">
-            <button type="submit" onclick="sendData()">
-                <span id="button-text">начать поиск</span>
+            <button type="button" id="searchbutton">
+                <span id="buttontext">начать поиск</span>
                 <span id="spinner" style="display: none;">⌛ загрузка...</span>
             </button>
         </div>
 
+        <script src="{% static 'analysis/restaurant_search.js' %}" defer></script>
 
 {% endblock %}
