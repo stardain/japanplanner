@@ -6,7 +6,7 @@
     <div class="result-card" style="background: #F2F0EF; padding: 15px; border-radius: 8px;">
         <img src="https://via.placeholder.com" alt="{{ item.main_pic }}">
         <h3>{{ count }}. {{ rest.name|default:"Japanese Dragon" }}</h3>
-        <p> {{ rest.station|default:"10" }} минут в пути</p>
+        <p> {{ rest.travel_time|default:"10" }} минут в пути</p>
         <p> рейтинг: {{ rest.rating|default:"4.44" }}/5</p>
     </div>
 {% endpartialdef %}
@@ -25,7 +25,24 @@
     мой аккаунт
     </a>
 
+    {% csrf_token %}
+
+    <div style="flex: 0 0 100%; display: flex; justify-content: center;">
+        <div class="row-full" style="background-color: #F2F0EF; 
+                display: flex; 
+                flex-direction: row; 
+                gap: 4px; 
+                padding: 15px; 
+                width: fit-content; 
+                border-radius: 8px;">
+            <label for="amount" style="font-weight: bold;">мне нужен топ -</label>
+            <input type="number" style="width: 5ch;" id="amount" name="amount" min="1" step="1" value="{{ filters.best }}">
+            <span >(макс. 100)</span>
+        </div>
+    </div>
+
     <div id="saved-search"; class="main-container">
+
         <!-- Column 1 -->
         <form>
             <p style="font-weight: bold; font-size: 18px;">специализация ресторана</p>
@@ -63,7 +80,7 @@
             <div class="checkbox-item">
             <input type="radio" id="seafood" name="specialty" value="seafood"
             {% if filters.spec == "seafood" %}checked{% endif %}>
-            <label for="green">морепродукты</label><br>
+            <label for="seafood">морепродукты</label><br>
             </div>
 
             <div class="checkbox-item">
@@ -167,7 +184,10 @@
 
         </div>
 
-        <button>искать</button>
+            <button type="button" id="searchbutton">
+                <span id="buttontext">начать поиск</span>
+                <span id="spinner" style="display: none;">⌛ загрузка...</span>
+            </button>
     </div>
 
 
@@ -196,6 +216,7 @@
                 data-fee="{{ rest.fee|escapejs }}"
                 data-long-desc="{{ rest.long_desc|escapejs }}"
                 data-main-pic="{{ rest.main_pic|default:default_img }}"
+                data-travel-time="{{ rest.travel_time|escapejs }}"
                 style="cursor: pointer; color: black; text-decoration: underline;">
 
                 {% with count=forloop.counter %}

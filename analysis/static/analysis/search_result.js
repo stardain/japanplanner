@@ -23,7 +23,7 @@ window.openDetails = function(element) {
         rating.textContent = (element.dataset.rating || "3") + " / 4";
         shortDesc.textContent = element.dataset.shortDesc || "просто ресторан нечего сказать абсолютно";
         longDesc.textContent = element.dataset.longDesc || "просто ресторан нечего сказать абсолютно";
-        time.textContent = (element.dataset.time || "30") + " минут в пути";
+        time.textContent = (element.dataset.travelTime || "30") + " минут в пути";
         station.textContent = element.dataset.station || "левая станция";
         openHours.textContent = element.dataset.openHours || "открыт всегда";
         closedOn.textContent = element.dataset.closedOn || "закрыт всегда";
@@ -44,3 +44,62 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
+//
+
+document.addEventListener('DOMContentLoaded', function() {
+
+const token = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+function sendData() {
+    const checkedBoxes = document.querySelectorAll('input[name="additions"]:checked');
+    const selectedAdditions = Array.from(checkedBoxes).map(cb => cb.value);
+
+    const data = {
+
+        amount: document.getElementById('amount').value,
+        specialty: document.querySelector('input[name="specialty"]:checked')?.value || '',
+        additions: selectedAdditions,
+        sorting: document.querySelector('input[name="sorting"]:checked')?.value || '',
+        address: document.getElementById('address').value,
+        day: document.getElementById('day-select').value,
+
+    };
+
+    searchbutton.disabled = true;
+    buttontext.style.display = 'none';
+    spinner.style.display = 'inline';
+
+    fetch('/analysis/rest_search/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': token,
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log("Success:", data);
+        if (data.redirect_url) {
+            // This actually moves the user to the next page
+            window.location.href = data.redirect_url;
+        }
+    })
+    .catch(error => console.error("Error:", error))
+    .finally(() => {
+        // --- STEP B: RESET BUTTON (Happens on Success OR Error) ---
+        searchbutton.disabled = false;
+        buttontext.style.display = 'inline';
+        spinner.style.display = 'none';
+    });
+}
+
+    const btn = document.getElementById('searchbutton');
+    if (btn) {
+        searchbutton.addEventListener('click', sendData);
+        console.log("EventListener attached!");
+    } else {
+        console.error("Button not found!");
+    }
+
+});

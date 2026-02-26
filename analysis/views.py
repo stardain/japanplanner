@@ -2,7 +2,6 @@
 
 план по финалайзингу поиска: 
 
-- протестировать скорость поиска на 50, 25, 10, 5
 - прихорошить выдачу бэка для вью
 - создать логику перелистывания страниц по 5 ресторанов на каждой
 - если что-то не укажут, сделать видимую ошибку
@@ -16,11 +15,8 @@ from django.urls import reverse
 from django.http import JsonResponse
 import asyncio
 from urllib.parse import urlencode
-from .services.food import customize_search, gather_all_urls, the_great_scraper
+from .services.food import customize_search, gather_all_urls, the_great_scraper, home_to_restaurant_time
 
-#def rest_search(request):
-#    context = {'my_variable': 'Hello from Django!'}
-#    return render(request, 'restaurant_search.html', context)
 
 def rest_search(request):
     if request.method == "POST":
@@ -42,6 +38,8 @@ def rest_search(request):
             'address': address,
         }
 
+        hotel_fullname = user_filters['address'].removesuffix(" Sta.")
+
         #user_filters_json = json.dumps(user_filters)
         request.session['user_filters'] = user_filters
         
@@ -51,7 +49,8 @@ def rest_search(request):
 
         all_restaurants_info_cleaned = []
         for item in all_restaurants_info:
-            all_restaurants_info_cleaned.append({
+
+            rest_info = {
                 'name': str(item.get('name', '')),
                 'rating': str(item.get('rating', '')),
                 'short_desc': str(item.get('short_desc', '')),
@@ -61,7 +60,11 @@ def rest_search(request):
                 'fee': str(item.get('fee', '')),
                 'main_pic': str(item.get('main_pic', '')),
                 'long_desc': str(item.get('long_desc', '')),
-            })
+            }
+
+            print(rest_info['station'].strip())
+            rest_info['travel_time'] = home_to_restaurant_time(hotel_fullname, rest_info['station'].strip())
+            all_restaurants_info_cleaned.append(rest_info)
 
         print(all_restaurants_info_cleaned)
 
@@ -74,6 +77,7 @@ def rest_search(request):
     context = {'ass': 'pussy'}
 
     return render(request, 'restaurant_search.html', context)
+
 
 def search_result(request):
 

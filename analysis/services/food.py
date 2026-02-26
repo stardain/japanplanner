@@ -8,19 +8,19 @@
 
 2. добавить фронт -- данные из поиска -> корректная выдача
 
-!
 задачи бэк + фронт:
--- дополнить вью функциями подсчёта времени (поставить дефолт, отредачить строку; станция изымается из инфы реста, как это сделать?)
--- сделать работающей кнопку повторного запуска фильтра на странице выдачи
 -- создать логику перелистывания страниц и соотношение её с количеством ресторанов (5 на каждой)
 -- прихорошить данные ресторанов + разложить их по попапу красиво
+
+!
+подумать по поводу асинхронных коннекшнов, нужно ли их убирать?
 !
 
 3. создать бэк лк ПОЛНОСТЬЮ
 4. добавить верстку и фронт лк
 5. добавить коннекшн поп-апа ресторана и сохранения в лк
 6. добавить время на метро в бэк, затем во фронт
-7. добавить беслатное апи карт и добавить путь пешком
+7. добавить беслатное апи карт (захостить сервер в докере) и добавить путь пешком
 8. порешать долбаёбские проблемы какие-нибудь
 9. деплой, to be continued...
 
@@ -217,7 +217,7 @@ async def the_great_scraper(page_urls: list):
                 }
                 scrapeops_url = f"{SCRAPEOPS_ENDPOINT}?{urlencode(proxy_params)}"
 
-                current_timeout = aiohttp.ClientTimeout(total=180 + (attempt * 30), sock_read=15)
+                current_timeout = aiohttp.ClientTimeout(total=180 + (attempt * 30))
                 
                 async with session.get(scrapeops_url, timeout=current_timeout) as response:
                     if response.status != 200:
@@ -334,72 +334,63 @@ if str(BASE_DIR) not in sys.path:
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'project.settings')
 django.setup()
 
+from analysis.models import StationInfo, StationNeighbours
+
 @transaction.atomic
 def find_every_cross(start_line_id: str, end_line_id: str):
     """
     извлекает время из бд по длинным именам, находит все комбинации веток с 1-2 пересадкой
     """
-    with connection.cursor() as cursor:
 
-        line_list = ['G', 'M', 'Mb', 'H', 'T', 'C', 'Y', 'Z', 'N', 'F', 'A', 'I', 'S', 'E']
-        cross_list = []
+    line_list = ['G', 'M', 'Mb', 'H', 'T', 'C', 'Y', 'Z', 'N', 'F', 'A', 'I', 'S', 'E']
+    cross_list = []
 
         # 1: краевой случай: оба на одной ветке (A-A)
         #if start_line_id[0] == end_line_id[0]:
         #    return ["None"]
         # 2: находит все прямые переходы со стартовой ветки на нужную (A-B)
-        def are_there_straight_crosses(start, end):
-            cursor.execute(f"SELECT station_id, station_neighbour FROM station_neighbours WHERE station_id LIKE '{start[0]}%' AND station_neighbour LIKE '{end[0]}%'")
-            return len(cursor.fetchall())
+    def are_there_straight_crosses(start, end):
+        prefix_start = start[0]
+        prefix_end = end[0]
+        count = StationNeighbours.objects.filter(
+            station_id__startswith=prefix_start,
+            station_neighbour__startswith=prefix_end
+        ).count()
+        return count > 0
         # 2: добавляем неопознаваемые прямые переходы (A-B)
-        if are_there_straight_crosses(start_line_id, end_line_id) > 0:
-            cross_list.append("Straight")
+    if are_there_straight_crosses(start_line_id, end_line_id) > 0:
+        cross_list.append("Straight")
         # 3: добавляем линии переходов
-        for line in line_list:
-            if are_there_straight_crosses(start_line_id, line) > 0 and are_there_straight_crosses(line, end_line_id) > 0:
-                cross_list.append(line)
+    for line in line_list:
+        if are_there_straight_crosses(start_line_id, line) > 0 and are_there_straight_crosses(line, end_line_id) > 0:
+            cross_list.append(line)
 
-        return (start_line_id, end_line_id, cross_list)
+    return (start_line_id, end_line_id, cross_list)
 
 @transaction.atomic
 def find_all_line_routes(start_station_id: str, cross_line: str, end_station_id: str):
 
-    with connection.cursor() as cursor:
+    start_prefix = start_station_id[0]
+    end_prefix = end_station_id[0]
 
-        if cross_line == 'Straight':
-            
-            cursor.execute(f"""
-                SELECT station_id, station_neighbour
-                FROM station_neighbours
-                WHERE station_id LIKE '{start_station_id[0]}%' AND station_neighbour LIKE '{end_station_id[0]}%'
-            """)
+    if cross_line == 'Straight':
+        combinations = list(StationNeighbours.objects.filter(
+            station_id__startswith=start_prefix,
+            station_neighbour__startswith=end_prefix
+        ).values_list('station_id', 'station_neighbour'))
+    
+    else:
+        A_to_M = list(StationNeighbours.objects.filter(
+            station_id__startswith=start_prefix,
+            station_neighbour__startswith=cross_line
+        ).values_list('station_id', 'station_neighbour'))
 
-            combinations = cursor.fetchall()
-        
-        else:
+        M_to_B = list(StationNeighbours.objects.filter(
+            station_id__startswith=cross_line,
+            station_neighbour__startswith=end_prefix
+        ).values_list('station_id', 'station_neighbour'))
 
-            # A-A-M -- ищем все станции-переходы и станции на М, на которые они переходят
-
-            cursor.execute(f"""
-                SELECT station_id, station_neighbour
-                FROM station_neighbours
-                WHERE station_id LIKE '{start_station_id[0]}%' AND station_neighbour LIKE '{cross_line}%'
-            """)
-            
-            A_to_M = cursor.fetchall()
-
-            
-            # M-M-B -- делаем то же самое на финальную ветку
-
-            cursor.execute(f"""
-                SELECT station_id, station_neighbour
-                FROM station_neighbours
-                WHERE station_id LIKE '{cross_line}%' AND station_neighbour LIKE '{end_station_id[0]}%'
-            """)
-
-            M_to_B = cursor.fetchall()
-
-            combinations = [(am + mb) for am in A_to_M for mb in M_to_B]
+        combinations = [(am + mb) for am in A_to_M for mb in M_to_B]
 
     return combinations
 
@@ -448,7 +439,7 @@ def quickest_way(start: str, routes: list, end: str):
 
     
     quickest_stations = [start] + list(quickest_stations) + [end]
-    time = 0
+    time_local = 0
 
     for ind in range(len(quickest_stations)-1):
         # ind + ind+1
@@ -462,87 +453,90 @@ def quickest_way(start: str, routes: list, end: str):
         destination = quickest_stations[ind+1]
 
         if current_st[0] != quickest_stations[ind+1][0]:
-
-            with connection.cursor() as cursor:
-
-                cursor.execute(f"""
-
-                SELECT time FROM station_neighbours WHERE station_id = '{current_st}' AND station_neighbour = '{destination}';
-
-                """)
-
-                res_time = cursor.fetchone()
-
-            if res_time and res_time[0] is not None:
-                time += res_time[0]
-            
+            res_time = StationNeighbours.objects.filter(
+                station_id=current_st, 
+                station_neighbour=destination
+            ).values_list('time', flat=True).first()
+            if res_time is not None:
+                time_local += res_time
             continue
         
         direction = 1 if current_st[-2:] < quickest_stations[ind+1][-2:] else -1
         next_st = current_st[:-2] + f"{int(current_st[-2:])+direction:02d}"
+        line_prefix = f"{current_st[:-2]}%"
+
+        query = """
+            WITH RECURSIVE route AS (
+                SELECT station_id, station_neighbour, time AS total_time, 1 as depth
+                FROM station_neighbours
+                WHERE station_id = %s AND station_neighbour = %s
+
+            UNION ALL
+
+                SELECT sn.station_id, sn.station_neighbour, (r.total_time + sn.time), r.depth + 1
+                FROM station_neighbours sn
+                INNER JOIN route r ON sn.station_id = r.station_neighbour
+                WHERE r.station_neighbour <> %s
+                AND r.depth < 38
+                AND sn.station_neighbour LIKE %s
+            )
+            
+            CYCLE station_neighbour SET is_cycle USING path
+
+            SELECT total_time FROM route 
+            WHERE station_neighbour = %s
+            AND NOT is_cycle
+            ORDER BY total_time ASC 
+            LIMIT 1;
+        """
 
         with connection.cursor() as cursor:
-
-            cursor.execute(f"""
-                    WITH RECURSIVE route AS (
-                        SELECT station_id, station_neighbour, time AS total_time, 1 as depth
-                        FROM station_neighbours
-                        WHERE station_id = '{current_st}' AND station_neighbour = '{next_st}'
-
-                    UNION ALL
-
-                        SELECT sn.station_id, sn.station_neighbour, (r.total_time + sn.time), r.depth + 1
-                        FROM station_neighbours sn
-                        INNER JOIN route r ON sn.station_id = r.station_neighbour
-                        WHERE r.station_neighbour <> '{destination}'
-                        AND r.depth < 38
-                        AND sn.station_neighbour LIKE '{current_st[:-2]}%'
-                    )
-                    
-                    CYCLE station_neighbour SET is_cycle USING path
-
-                    SELECT total_time FROM route 
-                    WHERE station_neighbour = '{destination}'
-                    AND NOT is_cycle
-                    ORDER BY total_time ASC 
-                    LIMIT 1; 
-
-            """)
-
+            # Pass variables as a tuple to the execute method
+            cursor.execute(query, [current_st, next_st, destination, line_prefix, destination])
             res_time = cursor.fetchone()
 
         if res_time and res_time[0] is not None:
-            time += res_time[0]
+            time_local += res_time[0]
 
-    return time
+    return time_local
 
 @transaction.atomic
 def home_to_restaurant_time(home_fullname: str, restaurant_fullname: str):
 
+    print("We're inside the home-restaurant-time function!")
     # ищем все варианты станций, на которые можем спуститься в большой станции -- где несколько станций с одним именем
-    with connection.cursor() as cursor:
-        query = "SELECT station_id FROM station_info WHERE station_fullname = %s"
-        cursor.execute(query, (home_fullname,))
-        home_station_ids = [name[0] for name in cursor.fetchall()]
-        cursor.execute(query, (restaurant_fullname,))
-        rest_station_ids = [name[0] for name in cursor.fetchall()]
-        combinations = [[start, end] for start in home_station_ids for end in rest_station_ids]
+    home_station_ids = list(StationInfo.objects.filter(
+        station_fullname=home_fullname
+    ).values_list('station_id', flat=True))
+
+    clean_rest_name = restaurant_fullname.removesuffix(" Sta.").replace(" ", "-")
+
+    rest_station_ids = list(StationInfo.objects.filter(
+        station_fullname__iexact=clean_rest_name
+    ).values_list('station_id', flat=True))
+
+    if not rest_station_ids:
+        rest_station_ids = ['M17']
+    
+    print(f"Home IDs: {home_station_ids}, Rest IDs: {rest_station_ids}")
+
+    combinations = [[start, end] for start in home_station_ids for end in rest_station_ids]
 
     best_travel_time = 100
 
     for comb in combinations:
-
         home_station, restaurant_station = comb
-
         # every suitable line
         # ['Straight', 'H', 'T', 'Z', 'A', 'I', 'S', 'E']
         home_st_id, rest_st_id, every_cross = find_every_cross(home_station, restaurant_station)
-
         for cross in every_cross:
             # every variant of getting on this line
             # [('A18', 'G19'), ('A13', 'G11'), ('A10', 'G08')]
             routes_for_a_line = find_all_line_routes(home_st_id, cross, rest_st_id)
-            best_travel_time = min(best_travel_time, quickest_way(home_st_id, routes_for_a_line, rest_st_id))
-
+            fast = quickest_way(home_st_id, routes_for_a_line, rest_st_id)
+            print(fast)
+            if fast > 0:
+                best_travel_time = min(best_travel_time, fast)
     return best_travel_time
 
+print(home_to_restaurant_time('Sengakuji', 'Shibakoen'))
