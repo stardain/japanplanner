@@ -4,8 +4,6 @@
 
 */
 
-alert("JS is alive!");
-
 const token = document.querySelector('[name=csrfmiddlewaretoken]').value;
 
 function sendData() {

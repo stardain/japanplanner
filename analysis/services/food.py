@@ -9,7 +9,6 @@
 2. добавить фронт -- данные из поиска -> корректная выдача
 
 задачи бэк + фронт:
--- создать логику перелистывания страниц и соотношение её с количеством ресторанов (5 на каждой)
 -- прихорошить данные ресторанов + разложить их по попапу красиво
 
 !
@@ -112,11 +111,7 @@ data1 = '{"specialty": "japanese_cuisine", "sorting_method": "by_locals", "featu
 data2 = '{"specialty": "izakaya", "sorting_method": "by_locals", "features": ["unlimited_drinks", "sake"]}'
 data3 = '{"specialty": "grilled_meat", "sorting_method": "by_locals", "features": ["sake"]}'
 
-rests_asked = 5
-rests_actual_max = 50
-rests_limit = min(rests_actual_max, 50)
-rests_exact_num = min(rests_asked, rests_limit)
-exact_pages = ceil(rests_exact_num/20)
+#rests_asked = 5
 
 all_pages = []
 all_restaurants_info = []
@@ -199,7 +194,7 @@ async def get_page_contents(session, url):
 
         return data
 
-async def the_great_scraper(page_urls: list):
+async def the_great_scraper(page_urls: list, rests_asked: int):
 
     async def fix_max_number(session, htmls, max_retries=5):
         target_url = htmls[0] if isinstance(htmls, list) else htmls
@@ -272,11 +267,9 @@ async def the_great_scraper(page_urls: list):
         timeout = aiohttp.ClientTimeout(total=120)
         all_restaurant_info = []
 
-        global rests_actual_max, rests_exact_num, exact_pages, rests_limit
-
         rests_actual_max = await fix_max_number(session, page_urls)
         rests_limit = min(rests_actual_max, 50)
-        rests_exact_num = min(rests_asked, rests_limit)
+        rests_exact_num = min(int(rests_asked), rests_limit)
         exact_pages = ceil(rests_exact_num/20)
 
         print(f"exactly this many restaurants -- {rests_exact_num}")
@@ -284,7 +277,11 @@ async def the_great_scraper(page_urls: list):
 
         gather_all_urls(exact_pages, RESTAURANT_URL)
 
-        await url_customized_event.wait()
+        if not url_customized_event.is_set():
+            print("Event not set yet — waiting...")  # debug
+            await url_customized_event.wait()
+        else:
+            pass
 
         for page in page_urls:
 

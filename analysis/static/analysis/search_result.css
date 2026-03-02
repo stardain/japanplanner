@@ -18,6 +18,27 @@ p {
     align-content: center;
 }
 
+a {
+  display: inline-block;
+  padding: 1px 6px;
+  font-family: Arial, sans-serif;
+  font-size: 13.3333px;
+  font-weight: normal;
+  color: buttontext;
+  background-color: buttonface;
+  border: 2px outset buttonborder;
+  cursor: default;
+  text-decoration: none;
+  text-align: center;
+  box-sizing: border-box;
+  user-select: none;
+  margin: 20px;
+}
+
+a:active {
+  border-style: inset;
+}
+
 button {
     width: 100%;
     display: flex;

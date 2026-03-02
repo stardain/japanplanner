@@ -13,9 +13,11 @@ import json
 from django.shortcuts import render, redirect
 from django.urls import reverse
 from django.http import JsonResponse
+from django.core.paginator import Paginator
 import asyncio
 from urllib.parse import urlencode
 from .services.food import customize_search, gather_all_urls, the_great_scraper, home_to_restaurant_time
+from .utils import decode_unicode, clean_whole_dict
 
 
 def rest_search(request):
@@ -45,7 +47,7 @@ def rest_search(request):
         
         tabelog_search_half = customize_search(user_filters)
         tabelog_search_list = gather_all_urls(amount, tabelog_search_half)
-        all_restaurants_info = asyncio.run(the_great_scraper(tabelog_search_list))
+        all_restaurants_info = asyncio.run(the_great_scraper(tabelog_search_list, amount))
 
         all_restaurants_info_cleaned = []
         for item in all_restaurants_info:
@@ -81,9 +83,24 @@ def rest_search(request):
 
 def search_result(request):
 
-    context = {
-        'restaurants': request.session.get('restaurants', []),
-        'filters': request.session.get('user_filters', []) # This is the list of checked values
-    }
+    all_rests = request.session.get('restaurants', [])
+    filters = request.session.get('user_filters', {})
 
-    return render(request, 'search_result.html', context)
+    # 2. Setup Paginator (5 per page)
+    paginator = Paginator(all_rests, 5)
+    
+    # 3. Get current page number from URL (defaults to 1)
+    page_number = request.GET.get('page', 1)
+    page_obj = paginator.get_page(page_number)
+
+    return render(request, 'search_result.html', {
+        'page_obj': page_obj,
+        'filters': filters,
+    })
+
+#    context = {
+#        'restaurants': request.session.get('restaurants', []),
+#        'filters': request.session.get('user_filters', []) # This is the list of checked values
+#    }
+
+#    return render(request, 'search_result.html', context)
