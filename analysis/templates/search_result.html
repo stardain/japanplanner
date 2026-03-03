@@ -206,17 +206,17 @@
         {% for rest in page_obj %}
             <div class="restaurant-card">
             <h3 onclick="openDetails(this)" 
-                data-name="{{ rest.name|escapejs }}"
-                data-rating="{{ rest.rating|escapejs }}"
-                data-short-desc="{{ rest.short_desc|escapejs }}"
-                data-station="{{ rest.station|escapejs }}"
-                data-hours-raw="{{ rest.hours_raw|escapejs }}"
-                data-closed-on="{{ rest.closed_on|escapejs }}"
-                data-open-hours="{{ rest.open_hours|escapejs }}"
-                data-fee="{{ rest.fee|escapejs }}"
-                data-long-desc="{{ rest.long_desc|escapejs }}"
+                data-name="{{ rest.name }}"
+                data-rating="{{ rest.rating }}"
+                data-short-desc="{{ rest.short_desc }}"
+                data-station="{{ rest.station }}"
+                data-hours-raw="{{ rest.hours_raw }}"
+                data-closed-on="{{ rest.closed_on }}"
+                data-open-hours="{{ rest.open_hours }}"
+                data-fee="{{ rest.fee }}"
+                data-long-desc="{{ rest.long_desc }}"
                 data-main-pic="{{ rest.main_pic|default:default_img }}"
-                data-travel-time="{{ rest.travel_time|escapejs }}"
+                data-travel-time="{{ rest.travel_time }}"
                 style="cursor: pointer; color: black; text-decoration: underline;">
 
                 {% with count=forloop.counter %}

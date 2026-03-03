@@ -23,9 +23,15 @@
 8. порешать долбаёбские проблемы какие-нибудь
 9. деплой, to be continued...
 
+!
+если наткнулся на ошибку с 0 результатами, больше не тратить попытки
+!
+
 """
 
 from pathlib import Path
+import unicodedata
+import codecs
 import re
 import json
 import sys
@@ -116,11 +122,31 @@ data3 = '{"specialty": "grilled_meat", "sorting_method": "by_locals", "features"
 all_pages = []
 all_restaurants_info = []
 
+def clean_text(text):
+    if not text or not isinstance(text, str):
+        return text
+    
+    # 1. Handle literal '\u0022' etc. WITHOUT using json.loads
+    if '\\u' in text:
+        try:
+            # We use 'unicode_escape' to turn the TEXT \u0022 into the CHAR "
+            # 'raw_unicode_escape' is often safer for web-scraped text
+            text = text.encode('latin-1').decode('unicode_escape')
+        except Exception:
+            # If it fails, we just keep the original text
+            pass
+
+    # 2. Normalize (fixes the \u00A0 non-breaking spaces from Tabelog)
+    text = unicodedata.normalize('NFKC', text)
+    
+    # 3. Clean up whitespace
+    return " ".join(text.split())
+
 def gather_all_urls(how_many_pages, search_url):
     """
     список страниц которые надо спарсить
     """
-    global all_pages
+    #global all_pages
     all_pages = []
     for page in range(1, int(how_many_pages)+1):
         all_pages.append(search_url + str(page) + '/' + FEATURES)
@@ -143,54 +169,59 @@ async def get_page_contents(session, url):
         soup = BeautifulSoup(html, 'lxml') 
         data = {}
 
-        # ИМЯ + КАТЕГОРИЯ + ОЦЕНКА
-        parent1 = soup.find("div", class_="rstdtl-header")
-        data["name"] = parent1.find("h2", class_="display-name").find('span').get_text(strip=True)
-        data["rating"] = parent1.find("span", class_="rdheader-rating__score-val-dtl").get_text(strip=True)
+        # NAME + RATING + CATEGORY
+        header = soup.find("div", class_="rstdtl-header")
+        if header:
+            data["name"] = clean_text(header.find("h2", class_="display-name").get_text())
 
-        try:
-            data["short_desc"] = parent1.find("span", class_="pillow-word").get_text(strip=True)
-        except Exception: 
-            data["short_desc"] = 0
+            data["rating"] = clean_text(header.find("span", class_="rdheader-rating__score-val-dtl").get_text())
+            
+            short_desc_tag = header.find("span", class_="pillow-word")
+            data["short_desc"] = clean_text(short_desc_tag.get_text()) if short_desc_tag else "0"
+            
+            # STATION
+            station_tag = header.find("span", class_="linktree__parent-target-text")
+            data["station"] = clean_text(station_tag.get_text()) if station_tag else ""
 
-        # РАЙОН + БЛИЖАЙШАЯ СТАНЦИЯ
-        data["station"] = parent1.find("span", class_="linktree__parent-target-text").get_text(strip=True)
-
-        # ВРЕМЯ РАБОТЫ + КОГДА ЗАКРЫТО
+        # HOURS & CLOSED ON
         parent2 = soup.find("ul", class_="rstinfo-table__business-list")
-        data["hours_raw"] = parent2.find_all("li", class_="rstinfo-table__business-item")
         open_hours = {}
-        for weekday_list in data["hours_raw"]:
-            days = weekday_list.find("p", class_="rstinfo-table__business-title").get_text(strip=True).split(", ")
-            hours = [re.sub(r'\s+', " ", hour.text.replace("\n", " ")) for hour in weekday_list.find_all("li", class_="rstinfo-table__business-dtl-text")]
-            for day in days:
-                open_hours[day] = hours
+        if parent2:
+            business_items = parent2.find_all("li", class_="rstinfo-table__business-item")
+            for item in business_items:
+                title_tag = item.find("p", class_="rstinfo-table__business-title")
+                if title_tag:
+                    # Clean day names
+                    days = clean_text(title_tag.get_text()).split(", ")
+                    # Clean hours list
+                    hours = [clean_text(h.get_text()) for h in item.find_all("li", class_="rstinfo-table__business-dtl-text")]
+                    for day in days:
+                        open_hours[day] = hours
 
-        try:
-            open_hours["closed_on"] = [soup.find("div", class_="rstinfo-table__business-other").get_text(strip=True).split("on")[-1]]
-        except Exception:
-            open_hours["closed_on"] = None
+            # CLOSED ON logic
+            other_info = soup.find("div", class_="rstinfo-table__business-other")
+            if other_info:
+                closed_text = clean_text(other_info.get_text())
+                open_hours["closed_on"] = [closed_text.split("on")[-1].strip()]
+            else:
+                open_hours["closed_on"] = None
         
         data["open_hours"] = open_hours
 
-        # КОМИССИИ
-
+        # FEE, PIC, LONG DESC
         try:
-            data['fee'] = soup.find("table", class_="c-table c-table--form rstinfo-table__table").find_all("tr")[-1].find("p", class_=None).get_text(strip=True)
+            fee_table = soup.find("table", class_="c-table c-table--form rstinfo-table__table")
+            data['fee'] = clean_text(fee_table.find_all("tr")[-1].find("p", class_=None).get_text())
         except:
             data['fee'] = None
 
-        # ОПИСАНИЕ + ГЛАВНАЯ КАРТИНКА
-
-        try:
-            data['main_pic'] = soup.find("img", class_="p-main-photos__slider-image").get("src")
-        except:
-            data['main_pic'] = None
+        pic_tag = soup.find("img", class_="p-main-photos__slider-image")
+        data['main_pic'] = pic_tag.get("src") if pic_tag else None
         
-        try:
-            data['long_desc'] = soup.find("div", class_="pr-comment-wrap").get_text(strip=True)
-        except:
-            data['long_desc'] = None
+        desc_tag = soup.find("div", class_="pr-comment-wrap")
+        data['long_desc'] = clean_text(desc_tag.get_text()) if desc_tag else None
+
+        print(repr(data["long_desc"]))
 
         return data
 
@@ -275,13 +306,15 @@ async def the_great_scraper(page_urls: list, rests_asked: int):
         print(f"exactly this many restaurants -- {rests_exact_num}")
         print(f"we download this many pages with 20 rests on them -- {exact_pages}")
 
-        gather_all_urls(exact_pages, RESTAURANT_URL)
+        #gather_all_urls(exact_pages, RESTAURANT_URL)
 
         if not url_customized_event.is_set():
             print("Event not set yet — waiting...")  # debug
             await url_customized_event.wait()
         else:
             pass
+
+        print("is not connected yet")
 
         for page in page_urls:
 
@@ -292,6 +325,8 @@ async def the_great_scraper(page_urls: list, rests_asked: int):
                 params=proxy_params,
                 timeout=timeout
             ) as response:
+
+                print("connection created, scrapinh all links")
 
                 search_page = await response.text()
                 soup = BeautifulSoup(search_page, 'lxml')

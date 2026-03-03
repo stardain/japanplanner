@@ -17,7 +17,6 @@ from django.core.paginator import Paginator
 import asyncio
 from urllib.parse import urlencode
 from .services.food import customize_search, gather_all_urls, the_great_scraper, home_to_restaurant_time
-from .utils import decode_unicode, clean_whole_dict
 
 
 def rest_search(request):
@@ -53,19 +52,20 @@ def rest_search(request):
         for item in all_restaurants_info:
 
             rest_info = {
-                'name': str(item.get('name', '')),
-                'rating': str(item.get('rating', '')),
-                'short_desc': str(item.get('short_desc', '')),
-                'station': str(item.get('station', '')),
-                'closed_on': str(item.get('closed_on', '')),
-                'open_hours': str(item.get('open_hours', '')),
-                'fee': str(item.get('fee', '')),
-                'main_pic': str(item.get('main_pic', '')),
-                'long_desc': str(item.get('long_desc', '')),
+                'name': item.get('name', ''),
+                'rating': item.get('rating', ''),
+                'short_desc': item.get('short_desc', ''),
+                'station': item.get('station', ''),
+                'closed_on': item.get('closed_on', ''),
+                'open_hours': item.get('open_hours', ''),
+                'fee': item.get('fee', ''),
+                'main_pic': item.get('main_pic', ''),
+                'long_desc': item.get('long_desc', ''),
             }
 
             print(rest_info['station'].strip())
             rest_info['travel_time'] = home_to_restaurant_time(hotel_fullname, rest_info['station'].strip())
+            #rest_info_cleaned = clean_whole_dict(rest_info)
             all_restaurants_info_cleaned.append(rest_info)
 
         print(all_restaurants_info_cleaned)
@@ -86,6 +86,16 @@ def search_result(request):
     all_rests = request.session.get('restaurants', [])
     filters = request.session.get('user_filters', {})
 
+    # THE FIX: Force the session strings to decode their escapes
+    if all_rests:
+        import json
+        # We dump to a string and load it back. 
+        # This forces Python to treat \u0026 as & once and for all.
+        try:
+            all_rests = json.loads(json.dumps(all_rests).encode('utf-8').decode('unicode_escape'))
+        except Exception:
+            pass
+    
     # 2. Setup Paginator (5 per page)
     paginator = Paginator(all_rests, 5)
     
