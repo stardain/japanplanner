@@ -10,6 +10,7 @@
 """ 
 
 import json
+import ast
 from django.shortcuts import render, redirect
 from django.urls import reverse
 from django.http import JsonResponse
@@ -86,15 +87,32 @@ def search_result(request):
     all_rests = request.session.get('restaurants', [])
     filters = request.session.get('user_filters', {})
 
-    # THE FIX: Force the session strings to decode their escapes
     if all_rests:
-        import json
-        # We dump to a string and load it back. 
-        # This forces Python to treat \u0026 as & once and for all.
-        try:
-            all_rests = json.loads(json.dumps(all_rests).encode('utf-8').decode('unicode_escape'))
-        except Exception:
-            pass
+        # 1. We iterate through each restaurant INDIVIDUALLY 
+        # This prevents one bad restaurant from breaking the whole page
+        for rest in all_rests:
+            for key, value in rest.items():
+                if isinstance(value, str) and '\\u' in value:
+                    try:
+                        # Surgical fix for \u0026 etc.
+                        rest[key] = value.encode('latin-1').decode('unicode_escape')
+                    except:
+                        pass
+            
+            # 2. THE THAW: Now specifically fix the hours
+            hours = rest.get('open_hours')
+            if isinstance(hours, str):
+                try:
+                    # Clean the string before thawing
+                    # This turns "{'Mon': ...}" text into a real Dict
+                    rest['open_hours'] = ast.literal_eval(hours.strip())
+                except Exception as e:
+                    print(f"Thaw failed for {rest.get('name')}: {e}")
+                    rest['open_hours'] = {}
+
+        # Now check the first one
+        if all_rests:
+             print(f"SUCCESS: {type(all_rests[0]['open_hours'])}")
     
     # 2. Setup Paginator (5 per page)
     paginator = Paginator(all_rests, 5)

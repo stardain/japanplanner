@@ -205,24 +205,31 @@
     <div class="results-grid">
         {% for rest in page_obj %}
             <div class="restaurant-card">
-            <h3 onclick="openDetails(this)" 
-                data-name="{{ rest.name }}"
-                data-rating="{{ rest.rating }}"
-                data-short-desc="{{ rest.short_desc }}"
-                data-station="{{ rest.station }}"
-                data-hours-raw="{{ rest.hours_raw }}"
-                data-closed-on="{{ rest.closed_on }}"
-                data-open-hours="{{ rest.open_hours }}"
-                data-fee="{{ rest.fee }}"
-                data-long-desc="{{ rest.long_desc }}"
-                data-main-pic="{{ rest.main_pic|default:default_img }}"
-                data-travel-time="{{ rest.travel_time }}"
-                style="cursor: pointer; color: black; text-decoration: underline;">
+                <h3 onclick="openDetails(this)" 
+                    data-name="{{ rest.name }}"
+                    data-rating="{{ rest.rating }}"
+                    data-short-desc="{{ rest.short_desc }}"
+                    data-station="{{ rest.station }}"
+                    data-hours-raw="{{ rest.hours_raw }}"
+                    data-closed-on="{{ rest.closed_on }}"
+                    data-open-hours="{{ rest.open_hours }}"
+                    data-fee="{{ rest.fee }}"
+                    data-long-desc="{{ rest.long_desc }}"
+                    data-main-pic="{{ rest.main_pic|default:default_img }}"
+                    data-travel-time="{{ rest.travel_time }}"
+                    style="cursor: pointer; color: black; text-decoration: underline;">
 
-                {% with count=forloop.counter %}
-                    {% partial result-card %}
-                {% endwith %}
-            </h3>
+                    <div class="hidden-hours" style="display: none;">
+
+                        {% for day, times in rest.open_hours.items %}
+                            <li><strong>{{ day }}:</strong> {{ times|join:", " }}</li>
+                        {% endfor %}
+                    </div>
+
+                    {% with count=forloop.counter %}
+                        {% partial result-card %}
+                    {% endwith %}
+                </h3>
             </div>
         {% endfor %}
     </div>
@@ -242,18 +249,47 @@
         </div>
 
         <dialog id="restaurantModal">
-            <h2 id="modalRestName"></h2>
-            <p id="modalRating"></p>
-            <p id="modalShortDesc"></p>
-            <p id="modalStation"></p>
-            <p id="modalClosedOn"></p>
-            <p id="modalOpenHours"></p>
-            <p id="modalFee"></p>
-            <p id="modalTime"></p>
-            <p id="modalLongDesc"></p>
-            <img id="modalImage" src="" alt="Restaurant Image" style="max-width: 100%; height: auto;">
-            <button id="modalSaveButton">в избранное</button>
-            <button id="modalCloseButton">закрыть</button>
+            <div class="modal-wrapper">
+
+                <div class="upper-row" style="background-color: #F2F0EF; 
+                display: flex; 
+                flex-direction: row; 
+                gap: 4px; 
+                margin: 20px;
+                width: fit-content; 
+                border-radius: 8px;">
+                    <div class="modal-pic">
+                        <img id="modalImage" src="" alt="Restaurant Image" style="max-width: 100%; height: auto;">
+                    </div>
+
+                    <div class="modal-short-info">
+                        <div class="modal-short-info-head">
+                            <h2 id="modalRestName"></h2>
+                            <p id="modalRating"></p>
+                            <p id="modalShortDesc"></p>
+                        </div>
+                        <div class="modal-short-info-body">
+                            <p id="modalFee"></p>
+                            <div class="opening-hours">
+                                <strong>Opening Hours:</strong>
+                                <ul id="modalOpenHours"></ul> <!-- Target this with JS -->
+                            </div>
+                            <p id="modalClosedOn"></p>
+                            <p id="modalStation"></p>
+                            <p id="modalTime"></p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-long-info">
+                    <p id="modalLongDesc"></p>
+                </div>
+
+                <div class="modal-buttons">
+                    <button id="modalSaveButton">в избранное</button>
+                    <button id="modalCloseButton">закрыть</button>
+                </div>
+            </div>            
         </dialog>
 
     </div>

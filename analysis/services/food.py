@@ -10,6 +10,8 @@
 
 задачи бэк + фронт:
 -- прихорошить данные ресторанов + разложить их по попапу красиво
+---- поскрести голову над выдачей расписаний
+---- выделить текст в таких штуках 【Featured on TV and Social Media】
 
 !
 подумать по поводу асинхронных коннекшнов, нужно ли их убирать?
@@ -202,9 +204,9 @@ async def get_page_contents(session, url):
             other_info = soup.find("div", class_="rstinfo-table__business-other")
             if other_info:
                 closed_text = clean_text(other_info.get_text())
-                open_hours["closed_on"] = [closed_text.split("on")[-1].strip()]
+                data["closed_on"] = [closed_text.split("on")[-1].strip()]
             else:
-                open_hours["closed_on"] = None
+                data["closed_on"] = None
         
         data["open_hours"] = open_hours
 
@@ -571,4 +573,3 @@ def home_to_restaurant_time(home_fullname: str, restaurant_fullname: str):
                 best_travel_time = min(best_travel_time, fast)
     return best_travel_time
 
-print(home_to_restaurant_time('Sengakuji', 'Shibakoen'))

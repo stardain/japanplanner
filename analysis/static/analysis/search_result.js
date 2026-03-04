@@ -17,6 +17,16 @@ window.openDetails = function(element) {
     const fee = document.getElementById('modalFee');
     const image = document.getElementById('modalImage');
 
+    const card = element.closest('.restaurant-card');
+    const hiddenHours = card.querySelector('.hidden-hours');
+
+    if (hiddenHours) {
+        // Copy the HTML from the card into the modal
+        openHours.innerHTML = hiddenHours.innerHTML;
+    } else {
+        openHours.innerHTML = "<li>Information not available</li>";
+    }
+
     if (modal) {
         // наполняют консты выше, которые эту инфу кладут в попап
         name.textContent = element.dataset.name || "Японский Дракон";
@@ -25,7 +35,6 @@ window.openDetails = function(element) {
         longDesc.textContent = element.dataset.longDesc || "просто ресторан нечего сказать абсолютно";
         time.textContent = (element.dataset.travelTime || "30") + " минут в пути";
         station.textContent = element.dataset.station || "левая станция";
-        openHours.textContent = element.dataset.openHours || "открыт всегда";
         closedOn.textContent = element.dataset.closedOn || "закрыт всегда";
         fee.textContent = element.dataset.fee || "50 рублей на чаевые";
         image.src = element.dataset.mainPic;

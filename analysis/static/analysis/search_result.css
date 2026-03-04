@@ -84,3 +84,67 @@ button {
   gap: 20px;
   
 }
+
+/* Target the dialog element itself */
+#restaurantModal {
+    border: none;
+    border-radius: 20px;
+    padding: 0; /* Let the content/images hit the edges */
+    width: 90%;
+    max-width: 1000px;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+    overflow: hidden; /* Clips the image to the border-radius */
+}
+
+/* Style the darkened background (The Backdrop) */
+#restaurantModal::backdrop {
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px); /* Very trendy "glass" effect */
+}
+
+.modal-pic {
+  min-width: 400px; 
+  min-height: 400px; 
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 20px;
+}
+
+.modal-short-info {
+  margin: 20px;
+}
+
+.modal-long-info {
+  margin: 20px;
+}
+
+.modal-buttons {
+  margin: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-short-info-head {
+    padding: 20px;
+}
+
+.modal-short-info-body {
+    padding: 20px;
+}
+
+#modalOpenHours {
+    display: block !important;
+    list-style: none !important; /* Removes bullet points */
+    padding: 10px 0 !important;
+    margin: 0 !important;
+}
+
+#modalOpenHours li {
+    display: block !important; /* This is the "Anti-String" line */
+    width: 100% !important;
+    margin-bottom: 8px;
+    border-bottom: 1px solid #eee; /* Adds a nice separator line */
+    padding-bottom: 4px;
+}
