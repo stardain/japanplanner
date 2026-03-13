@@ -13,10 +13,13 @@ from django.shortcuts import render, redirect
 from django.urls import reverse
 from django.http import JsonResponse
 from django.core.paginator import Paginator
+from django.contrib.auth import login
+from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.models import User
 import asyncio
 from urllib.parse import urlencode
 from .services.food import customize_search, gather_all_urls, the_great_scraper, home_to_restaurant_time
-
+from .forms import CustomUser
 
 def rest_search(request):
     if request.method == "POST":
@@ -51,6 +54,7 @@ def rest_search(request):
         for item in all_restaurants_info:
 
             rest_info = {
+                'link': item.get('link', ''),
                 'name': item.get('name', ''),
                 'rating': item.get('rating', ''),
                 'short_desc': item.get('short_desc', ''),
@@ -78,7 +82,6 @@ def rest_search(request):
     context = {'ass': 'pussy'}
 
     return render(request, 'restaurant_search.html', context)
-
 
 def search_result(request):
 
@@ -124,9 +127,24 @@ def search_result(request):
         'filters': filters,
     })
 
-#    context = {
-#        'restaurants': request.session.get('restaurants', []),
-#        'filters': request.session.get('user_filters', []) # This is the list of checked values
-#    }
+def check_username(request):
 
-#    return render(request, 'search_result.html', context)
+    username = request.GET.get('username', None)
+    # Check if a user with this name already exists
+    data = {
+        'is_taken': CustomUser.objects.filter(username__iexact=username).exists()
+    }
+    return JsonResponse(data)
+
+def registration(request):
+
+    if request.method == 'POST':
+        form = CustomUser(request.POST)
+        if form.is_valid():
+            user = form.save()  # Creates the user
+            login(request, user) # Logs them in immediately (Seamless Flow)
+            return redirect('home') 
+    else:
+        form = CustomUser()
+    
+    return render(request, 'register.html', {'form': form})

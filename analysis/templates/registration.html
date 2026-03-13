@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+{% load static %}
+
+<div class="registration-container">
+    <h2>Create your account</h2>
+    <form method="POST" id="reg-form">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Join Now</button>
+    </form>
+</div>
+
+<script>
+    // Optional: Add a simple "Loading..." state to the button
+    const form = document.getElementById('reg-form');
+    form.addEventListener('submit', () => {
+        form.querySelector('button').innerText = 'Creating account...';
+    });
+</script>

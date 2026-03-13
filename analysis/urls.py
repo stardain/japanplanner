@@ -5,5 +5,7 @@ from . import views
 
 urlpatterns = [
     path("rest_search/", views.rest_search, name="search"),
-    path("search_result/", views.search_result, name="result")
+    path("search_result/", views.search_result, name="result"),
+    path("register/", views.registration, name="register"),
+    path('ajax/validate-username/', views.check_username, name='validate_username')
 ]

@@ -168,6 +168,8 @@ async def get_page_contents(session, url):
         soup = BeautifulSoup(html, 'lxml') 
         data = {}
 
+        data["link"] = url
+
         # NAME + RATING + CATEGORY
         header = soup.find("div", class_="rstdtl-header")
         if header:
