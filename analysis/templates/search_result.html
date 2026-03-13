@@ -249,7 +249,7 @@
         </div>
 
         <dialog id="restaurantModal">
-            <div class="modal-wrapper">
+            <div class="modal-info-scrollable">
 
                 <div class="upper-row" style="background-color: #F2F0EF; 
                 display: flex; 
@@ -258,31 +258,38 @@
                 margin: 20px;
                 width: fit-content; 
                 border-radius: 8px;">
-                    <div class="modal-pic">
-                        <img id="modalImage" src="" alt="Restaurant Image" style="max-width: 100%; height: auto;">
-                    </div>
-
-                    <div class="modal-short-info">
-                        <div class="modal-short-info-head">
-                            <h2 id="modalRestName"></h2>
-                            <p id="modalRating"></p>
-                            <p id="modalShortDesc"></p>
+                    <div class="modal-pic-and-short-info">
+                        <div class="modal-pic">
+                            <img id="modalImage" src="" alt="Restaurant Image" style="max-width: 100%; height: auto;">
                         </div>
-                        <div class="modal-short-info-body">
-                            <p id="modalFee"></p>
-                            <div class="opening-hours">
-                                <strong>Opening Hours:</strong>
-                                <ul id="modalOpenHours"></ul> <!-- Target this with JS -->
+
+                        <div class="modal-short-info">
+                            <div class="modal-short-info-head">
+                                <h2 id="modalRestName"></h2>
+                                <p id="modalRating"></p>
+                                <p id="modalShortDesc"></p>
                             </div>
-                            <p id="modalClosedOn"></p>
-                            <p id="modalStation"></p>
-                            <p id="modalTime"></p>
+                            <div class="modal-short-info-body">
+                                <p id="modalFee"></p>
+                                <details class="hours-details">
+                                    <summary>🕒 営業時間 (Opening Hours)</summary>
+                                    <div class="opening-hours-content">
+                                        <ul id="modalOpenHours">
+                                            <!-- Your JS 'Teleport' will still drop the <li> tags here! -->
+                                        </ul>
+                                        <p id="modalClosedOn" style="margin-top: 10px; color: #d9534f;"></p>
+                                    </div>
+                                </details>
+                                <p id="modalClosedOn"></p>
+                                <p id="modalStation"></p>
+                                <p id="modalTime"></p>
+                            </div>
                         </div>
                     </div>
                 </div>
 
                 <div class="modal-long-info">
-                    <p id="modalLongDesc"></p>
+                    <div id="modalLongDesc" style="line-height: 1.6; white-space: pre-wrap;"></div>
                 </div>
 
                 <div class="modal-buttons">

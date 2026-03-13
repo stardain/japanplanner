@@ -27,12 +27,21 @@ window.openDetails = function(element) {
         openHours.innerHTML = "<li>Information not available</li>";
     }
 
+    let rawDesc = element.dataset.longDesc || "";
+    const tempDiv = document.createElement("div");
+    tempDiv.innerHTML = rawDesc;
+    let decodedDesc = tempDiv.textContent;
+    const cleanDesc = rawDesc.replace(/【([^】]+)】/g, '<div class="featured-tag">【$1】</div>');
+    
+    if (longDesc) {
+        longDesc.innerHTML = cleanDesc;
+    }
+
     if (modal) {
         // наполняют консты выше, которые эту инфу кладут в попап
         name.textContent = element.dataset.name || "Японский Дракон";
         rating.textContent = (element.dataset.rating || "3") + " / 4";
         shortDesc.textContent = element.dataset.shortDesc || "просто ресторан нечего сказать абсолютно";
-        longDesc.textContent = element.dataset.longDesc || "просто ресторан нечего сказать абсолютно";
         time.textContent = (element.dataset.travelTime || "30") + " минут в пути";
         station.textContent = element.dataset.station || "левая станция";
         closedOn.textContent = element.dataset.closedOn || "закрыт всегда";

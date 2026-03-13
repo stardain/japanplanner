@@ -1,8 +1,9 @@
 body {
     width: 38%;
     height: 70%;
-    margin: 100px;
+    margin: 50px auto;
 }
+
 
 form {
   background-color: #F2F0EF;
@@ -87,6 +88,7 @@ button {
 
 /* Target the dialog element itself */
 #restaurantModal {
+    max-height: 90vh;
     border: none;
     border-radius: 20px;
     padding: 0; /* Let the content/images hit the edges */
@@ -94,6 +96,18 @@ button {
     max-width: 1000px;
     box-shadow: 0 20px 40px rgba(0,0,0,0.3);
     overflow: hidden; /* Clips the image to the border-radius */
+    overflow: hidden;    /* Prevents the dialog itself from scrolling weirdly */
+    flex-direction: column;
+}
+
+#restaurantModal[open] {
+    display: flex;       /* Only flex when the dialog is OPEN */
+    flex-direction: column; 
+}
+
+/* Hide the 'ghost' copy when it's closed */
+#restaurantModal:not([open]) {
+    display: none;
 }
 
 /* Style the darkened background (The Backdrop) */
@@ -102,17 +116,50 @@ button {
     backdrop-filter: blur(4px); /* Very trendy "glass" effect */
 }
 
+.modal-short-info-head {
+    padding: 10px 0;
+    display: block; /* Remove the flex from here, it's not needed */
+}
+
 .modal-pic {
-  min-width: 400px; 
-  min-height: 400px; 
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin: 20px;
+    flex: 0 0 400px;
+    height: 400px; /* Lock the height */
+    display: flex;
+    align-items: center;      /* VERTICAL CENTER */
+    justify-content: center;   /* HORIZONTAL CENTER */
+    background: #000;          /* Adds black bars for non-square photos */
+    overflow: hidden;
+}
+
+#modalImage {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;       /* Shows the WHOLE photo, no cropping */
+}
+
+.modal-info-scrollable {
+    flex: 1;             /* Take up all available space */
+    overflow-y: auto;    /* THIS activates the scrollbar */
+    padding: 20px;
+    /* Optional: Add a smooth scroll feel */
+    scroll-behavior: smooth;
+}
+
+.modal-pic-and-short-info {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start; /* Prevents vertical stretching */
+    max-height: 85vh;
+    overflow: hidden;        /* Clips the outer edges */
 }
 
 .modal-short-info {
-  margin: 20px;
+    flex: 1;
+    display: flex;
+    flex-direction: column; /* Stack header, body, and buttons */
+    max-height: 85vh;       /* Matches the modal height */
+    overflow-y: auto;       /* Adds the scrollbar so NOTHING is unseen */
+    padding: 20px;
 }
 
 .modal-long-info {
@@ -120,10 +167,13 @@ button {
 }
 
 .modal-buttons {
-  margin: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+    position: sticky;       /* Stays visible at the bottom of the scroll */
+    bottom: 0;
+    background: white;      /* Prevents text from bleeding behind it */
+    padding: 15px 0;
+    margin-top: auto;       /* Pushes it to the very bottom */
+    border-top: 1px solid #eee;
+    flex-shrink: 0;         /* Prevents the button itself from squashing */
 }
 
 .modal-short-info-head {
@@ -147,4 +197,61 @@ button {
     margin-bottom: 8px;
     border-bottom: 1px solid #eee; /* Adds a nice separator line */
     padding-bottom: 4px;
+}
+
+.featured-tag {
+    display: block !important;
+    margin: 15px 0 !important;
+    padding: 10px !important;
+    background-color: #f0f4ff !important;
+    border: 2px solid rgb(126, 139, 181) !important;
+    border-radius: 8px !important;
+    font-weight: bold !important;
+    color: #333 !important;
+}
+
+.featured-tag::before {
+    content: "✨ " !important;
+}
+
+.featured-tag::after {
+    content: " ✨" !important;
+}
+
+.hours-details summary {
+    cursor: pointer;
+    font-weight: bold;
+    color: rgb(126, 139, 181);
+    padding: 10px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    list-style: none; /* Removes the default triangle */
+    outline: none;
+    transition: background 0.3s;
+}
+
+.hours-details summary:hover {
+    background: #f0f4ff;
+}
+
+/* Add a custom Japanese-style arrow */
+.hours-details summary::before {
+    content: "▶ ";
+    font-size: 0.8em;
+    margin-right: 5px;
+}
+
+.hours-details[open] summary::before {
+    content: "▼ ";
+}
+
+/* The content inside the dropdown */
+.opening-hours-content {
+    padding: 15px;
+    border: 1px solid #eee;
+    border-top: none;
+    border-bottom-left-radius: 8px;
+    border-bottom-right-radius: 8px;
+    max-height: 200px; /* Limit height of the list */
+    overflow-y: auto;  /* Add a scrollbar if the list is huge */
 }
