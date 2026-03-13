@@ -39,8 +39,8 @@ class StationNeighbours(models.Model):
 class SavedRestaurant(models.Model):
 
     user = models.ForeignKey(
-        settings.AUTH_USER_MODEL, 
-        on_delete=models.CASCADE, 
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
         related_name='saved_restaurants'
     )
     
