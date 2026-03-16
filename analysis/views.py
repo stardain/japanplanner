@@ -14,12 +14,17 @@ from django.urls import reverse
 from django.http import JsonResponse
 from django.core.paginator import Paginator
 from django.contrib.auth import login
-from django.contrib.auth.forms import UserCreationForm
-from django.contrib.auth.models import User
+from django.contrib.auth.forms import AuthenticationForm
+from django.contrib.auth.decorators import login_required
+from django.contrib import messages
 import asyncio
 from urllib.parse import urlencode
 from .services.food import customize_search, gather_all_urls, the_great_scraper, home_to_restaurant_time
-from .forms import CustomUser
+from .forms import CustomUserCreationForm
+
+def home(request):
+    # This is where your search results logic usually lives
+    return render(request, 'home.html')
 
 def rest_search(request):
     if request.method == "POST":
@@ -76,7 +81,7 @@ def rest_search(request):
         #parameters = urlencode(user_filters, doseq=True)
         request.session['restaurants'] = all_restaurants_info_cleaned
 
-        url = f"{reverse('result')}"
+        url = f"{reverse('search_result')}"
         return JsonResponse({'redirect_url': url})
 
     context = {'ass': 'pussy'}
@@ -132,19 +137,43 @@ def check_username(request):
     username = request.GET.get('username', None)
     # Check if a user with this name already exists
     data = {
-        'is_taken': CustomUser.objects.filter(username__iexact=username).exists()
+        'is_taken': CustomUserCreationForm.objects.filter(username__iexact=username).exists()
     }
     return JsonResponse(data)
 
-def registration(request):
+def sign_in_up(request):
+    # 1. Always start with empty forms for a GET request
+    login_form = AuthenticationForm()
+    register_form = CustomUserCreationForm()
 
     if request.method == 'POST':
-        form = CustomUser(request.POST)
-        if form.is_valid():
-            user = form.save()  # Creates the user
-            login(request, user) # Logs them in immediately (Seamless Flow)
-            return redirect('home') 
-    else:
-        form = CustomUser()
-    
-    return render(request, 'register.html', {'form': form})
+        # 2. Check WHICH button was clicked
+        if 'login_submit' in request.POST:
+            # ONLY fill the login form with data
+            login_form = AuthenticationForm(request, data=request.POST)
+            if login_form.is_valid():
+                user = login_form.get_user()
+                login(request, user)
+                return redirect('home')
+            # If invalid, register_form stays as an empty object (no errors)
+
+        elif 'register_submit' in request.POST:
+            # ONLY fill the register form with data
+            register_form = CustomUserCreationForm(request.POST)
+            if register_form.is_valid():
+                user = register_form.save()
+                login(request, user)
+                return redirect('home')
+            # If invalid, login_form stays as an empty object (no errors)
+
+    return render(request, 'registration.html', {
+        'login_form': login_form,
+        'register_form': register_form,
+    })
+
+@login_required
+def account(request):
+    # This uses the 'related_name' we set in the SavedRestaurant model
+    saved_items = request.user.saved_restaurants.all()
+    return render(request, 'account.html', {'saved_items': saved_items})
+

@@ -13,6 +13,40 @@
     {% block extra_css %}{% endblock %}
 </head>
 <body>
+
+    <nav>
+
+        <!-- This div will be pinned to the top right via CSS -->
+        <div class="corner-element">
+            {% if request.resolver_match.url_name != 'sign_in_up' and request.resolver_match.url_name != 'account' %}
+                {% if user.is_authenticated %}
+                    <!-- Logged In State -->
+                    <a href="{% url 'account' %}" class="user-link">
+                        Привет, <strong>{{ user.username }}</strong>!
+                    </a>
+                {% else %}
+                    <!-- Guest State -->
+                    <a href="{% url 'sign_in_up' %}" class="user-link">
+                        Войти / Зарег.
+                    </a>
+                {% endif %}
+            {% endif %}
+        </div>
+
+
+    </nav>
+
+    {% if messages %}
+        <div class="messages-container">
+            {% for message in messages %}
+                <div class="alert {{ message.tags }}" id="message-{{ forloop.counter }}">
+                    <span>{{ message }}</span>
+                    <button class="close-btn" onclick="this.parentElement.style.display='none'">&times;</button>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
     {% block content %}{% endblock %}
 </body>
 </html>

@@ -1,19 +1,91 @@
 {% extends 'base.html' %}
 {% load static %}
 
-<div class="registration-container">
-    <h2>Create your account</h2>
-    <form method="POST" id="reg-form">
-        {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit">Join Now</button>
-    </form>
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'analysis/registration.css' %}">
+{% endblock %}
+
+{% block content %}
+<h1 style="text-align: center;">Registration / Sign In</h1>
+
+<div class="auth-container">
+    
+    <!-- Toggle Switch -->
+    <div class="auth-toggle" id="auth-container" 
+        data-has-errors="{% if register_form.errors %}true{% else %}false{% endif %}">
+        <div class="slider"></div>
+        <button type="button" id="show-signin" class="active" onclick="toggleAuth('signin')">Sign In</button>
+        <button type="button" id="show-signup" onclick="toggleAuth('signup')">Sign Up</button>
+    </div>
+
+    <!-- Centralized Error Display -->
+    {% if login_form.errors or register_form.errors %}
+        <div class="error-container" style="color: #721c24; background: #f8d7da; padding: 15px; border-radius: 8px; margin-bottom: 20px; width: 100%; box-sizing: border-box;">
+            {{ login_form.non_field_errors }}
+            {{ register_form.non_field_errors }}
+            
+            {% for field in register_form %}
+                {% if field.errors %}
+                    <p style="margin: 5px 0;"><strong>{{ field.label }}:</strong> {{ field.errors|striptags }}</p>
+                {% endif %}
+            {% endfor %}
+            {% for field in login_form %}
+                {% if field.errors %}
+                    <p style="margin: 5px 0;"><strong>{{ field.label }}:</strong> {{ field.errors|striptags }}</p>
+                {% endif %}
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <!-- Sign In Section -->
+    <div id="signin-section">
+        <form method="POST" action="{% url 'sign_in_up' %}" novalidate>
+            {% csrf_token %}
+            {{ login_form.as_p }}
+            <!-- CRITICAL: Added name="login_submit" -->
+            <button type="submit" name="login_submit" class="btn-main">Sign In</button>
+        </form>
+    </div>
+
+    <!-- Sign Up Section -->
+    <div id="signup-section" style="display: none;">
+        <form method="POST" action="{% url 'sign_in_up' %}" id="reg-form" novalidate>
+            {% csrf_token %}
+            {{ register_form.as_p }}
+            <!-- CRITICAL: Added name="register_submit" -->
+            <button type="submit" name="register_submit" id="submit-btn" class="btn-main">Register</button>
+        </form>
+    </div>
 </div>
 
 <script>
-    // Optional: Add a simple "Loading..." state to the button
-    const form = document.getElementById('reg-form');
-    form.addEventListener('submit', () => {
-        form.querySelector('button').innerText = 'Creating account...';
-    });
+    function toggleAuth(type) {
+        const signInSec = document.getElementById('signin-section');
+        const signUpSec = document.getElementById('signup-section');
+        const container = document.getElementById('auth-container');
+        const btnIn = document.getElementById('show-signin');
+        const btnUp = document.getElementById('show-signup');
+
+        if (type === 'signup') {
+            container.classList.add('signup-active');
+            signInSec.style.display = 'none';
+            signUpSec.style.display = 'block';
+            btnUp.classList.add('active');
+            btnIn.classList.remove('active');
+        } else {
+            container.classList.remove('signup-active');
+            signInSec.style.display = 'block';
+            signUpSec.style.display = 'none';
+            btnIn.classList.add('active');
+            btnUp.classList.remove('active');
+        }
+    }
+
+    window.onload = function() {
+        const container = document.getElementById('auth-container');
+        if (container.getAttribute('data-has-errors') === 'true') {
+            toggleAuth('signup');
+        }
+    };
 </script>
+{% endblock %}

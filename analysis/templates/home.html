@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="home-container">
+    <h1>Welcome to Japan Metro Search</h1>
+    <p>Find and save your favorite restaurants along the metro lines.</p>
+    
+    <div class="home-actions">
+        <!-- Button 1: Logical switch based on login status -->
+        {% if not user.is_authenticated %}
+            <a href="{% url 'sign_in_up' %}" class="btn-secondary">Войдите, чтобы сохранять рестораны</a>
+        {% else %}
+            <a href="{% url 'account' %}" class="btn-secondary">Перейти в сохраненные рестораны</a>
+        {% endif %}
+        <!-- Button 2: Main Search -->
+        <a href="{% url 'rest_search' %}" class="btn-primary">Начать искать рестораны</a>
+    </div>
+
+</div>
+{% endblock %}

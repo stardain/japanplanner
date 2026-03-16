@@ -11,6 +11,41 @@ html {
   align-items: center;
 }
 
+h1 {
+    width: fit-content;
+    line-height: 1;
+    color: #F2F0EF;
+    font-size: 120px;
+    font-family: 'Zain', sans-serif;
+    font-weight: 700;
+    font-style: italic;
+
+    margin-top: 80px;
+    margin-bottom: 10px;
+    text-align: center;
+    margin-right: auto;
+    margin-left: auto;
+
+}
+
+p {
+  font-weight: bold; 
+  font-size: 18px;
+}
+
+form {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column; 
+  background-color: #F2F0EF; 
+  gap: 8px; 
+  padding: 6px; 
+  width: 100%; 
+  border-radius: 8px;
+  align-items: center;
+  padding: 20px;
+}
+
 .corner-element {
     position: fixed; 
     top: 0;
@@ -69,4 +104,80 @@ html {
   font-family: "Zain", sans-serif;
   font-weight: 400;
   font-style: italic;
+}
+
+.messages-container {
+    width: 80%;
+    margin: 20px auto;
+}
+
+.alert {
+    display: flex;
+    justify-content: space-between; /* Pushes text and button apart */
+    align-items: center;
+    padding: 12px 20px;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    font-weight: 500;
+}
+
+.close-btn {
+    background: none;
+    border: none;
+    font-size: 22px;
+    font-weight: bold;
+    cursor: pointer;
+    color: inherit; /* Matches the text color of the alert */
+    line-height: 1;
+    padding: 0 0 0 15px;
+    opacity: 0.6;
+}
+
+.close-btn:hover {
+    opacity: 1;
+}
+
+/* Django's "success" tag styling */
+.alert.success {
+    background-color: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+/* Optional: styling for errors */
+.alert.error {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+nav {
+    display: flex;
+    justify-content: space-between; /* Logo on left, controls on right */
+    align-items: center;
+    padding: 15px 30px;
+}
+
+.user-corner {
+    background-color: #F2F0EF; /* Your requested color */
+    padding: 8px 20px;          /* Vertical and Horizontal padding */
+    border-radius: 25px;       /* Makes it look like a pill/button */
+    display: flex;
+    align-items: center;
+    gap: 15px;                 /* Space between links inside the box */
+}
+
+/* Optional: Make the links inside look cleaner */
+.user-corner a, .user-corner span {
+    text-decoration: none;
+    color: #333;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.user-corner button {
+    background: none;
+    border: none;
+    color: #888;
+    cursor: pointer;
+    font-size: 14px;
 }

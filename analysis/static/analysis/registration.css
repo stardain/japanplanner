@@ -1,0 +1,85 @@
+p {
+    margin: 5px;
+}
+
+.auth-toggle {
+    position: relative;
+    display: flex;
+    width: 240px; /* Adjust size as needed */
+    height: 45px;
+    background-color: #e0e0e0;
+    border-radius: 25px;
+    padding: 5px;
+    border: none;
+}
+
+.auth-toggle button {
+    flex: 1;
+    background: none;
+    border: none;
+    outline: none;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 600;
+    z-index: 2; /* Keeps text above the slider */
+    transition: color 0.3s ease;
+    color: #555;
+}
+
+.auth-toggle button.active {
+    color: #fff; /* White text for the active choice */
+}
+
+.slider {
+    position: absolute;
+    top: 5px;
+    left: 5px;
+    width: calc(50% - 5px);
+    height: calc(100% - 10px);
+    background-color: #007bff; /* Change to your brand color */
+    border-radius: 20px;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 1;
+}
+
+/* Moves the slider right when in signup mode */
+.signup-active .slider {
+    transform: translateX(100%);
+}
+
+.auth-container {
+    display: flex;
+    flex-direction: column; /* Stacks toggle and forms vertically */
+    align-items: center;    /* Centers everything horizontally */
+    justify-content: center;/* Centers everything vertically if container has height */
+    width: 100%;
+    max-width: 500px;       /* Keeps the form from getting too wide */
+    margin: 50px auto;      /* Centers the whole container on the page */
+    padding: 20px;
+}
+
+/* This ensures the toggle button itself stays centered */
+.auth-toggle {
+    margin-bottom: 30px;    /* Space between toggle and form */
+}
+
+/* This forces the Django form inputs to be centered and look uniform */
+#signin-section, #signup-section {
+    width: 100%;
+}
+
+#signin-section form, #signup-section form {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* Makes the Django-generated <p> and <input> tags full width */
+#signin-section p, #signup-section p {
+    width: 100%;
+}
+
+#signin-section input, #signup-section input {
+    width: 100%;
+    box-sizing: border-box; /* Prevents padding from breaking width */
+}

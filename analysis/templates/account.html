@@ -1,0 +1,40 @@
+<!-- templates/profile.html -->
+{% extends "base.html" %}
+
+{% block content %}
+<div class="profile-page">
+    <div class="profile-header">
+        <h1>Hello, {{ user.username }}</h1>
+        <p><strong>Your Address:</strong> 123 Metro St, Tokyo (Coming Soon)</p>
+    </div>
+
+    <div class="saved-section">
+        <h2>Your Saved Restaurants</h2>
+        <!-- Scrollable Window -->
+        <div class="scroll-window">
+            {% for item in saved_items %}
+                <div class="restaurant-card">
+                    <h3>{{ item.name }}</h3>
+                    <p>{{ item.short_desc }}</p>
+                    <a href="{{ item.link }}">View Details</a>
+                </div>
+            {% empty %}
+                <p>You haven't saved any restaurants yet.</p>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Fixed Footer Buttons -->
+    <div class="profile-footer">
+        <a href="{% url 'rest_search' %}" class="btn-secondary">Keep Searching</a>
+    </div>
+</div>
+
+<style>
+/* Essential CSS for the scrollable window */
+.profile-page { height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+.saved-section { flex-grow: 1; display: flex; flex-direction: column; padding: 20px; }
+.scroll-window { flex-grow: 1; overflow-y: auto; border: 1px solid #ccc; padding: 15px; border-radius: 8px; }
+.profile-footer { padding: 20px; border-top: 1px solid #eee; text-align: center; }
+</style>
+{% endblock %}
