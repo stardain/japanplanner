@@ -1,6 +1,16 @@
 <!-- templates/profile.html -->
 {% extends "base.html" %}
 
+{% load static %}
+
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'analysis/account.css' %}">
+{% endblock %}
+
+{% block extra_head %}
+<script src="{% static 'analysis/search_result.js' %}"></script>
+{% endblock %}
+
 {% block content %}
 <div class="profile-page">
     <div class="profile-header">
@@ -8,15 +18,36 @@
         <p><strong>Your Address:</strong> 123 Metro St, Tokyo (Coming Soon)</p>
     </div>
 
-    <div class="saved-section">
+        <div class="saved-section">
         <h2>Your Saved Restaurants</h2>
-        <!-- Scrollable Window -->
         <div class="scroll-window">
             {% for item in saved_items %}
-                <div class="restaurant-card">
+                <!-- This is the FIXED div with the popup trigger -->
+                <div class="restaurant-card" 
+                    onclick="openDetails(this)"
+                    data-name="{{ item.name }}"
+                    data-rating="{{ item.rating }}"
+                    data-short-desc="{{ item.short_desc }}"
+                    data-long-desc="{{ item.long_desc }}"
+                    data-main-pic="{{ item.main_pic }}"
+                    data-station="{{ item.station }}"
+                    data-closed-on="{{ item.closed_on }}"
+                    data-fee="{{ item.fee }}"
+                    data-link="{{ item.link }}"
+                    data-time="{{ item.time }}">
+                    
+                    <!-- The JS needs this to fill the hours in the popup -->
+                    <div class="hidden-hours" style="display:none;">
+                        {{ item.open_hours|safe }}
+                    </div>
+
+                    <img src="{{ item.main_pic }}" alt="{{ item.name }}">
                     <h3>{{ item.name }}</h3>
                     <p>{{ item.short_desc }}</p>
-                    <a href="{{ item.link }}">View Details</a>
+                    <p>Rating: {{ item.rating|default:"N/A" }}</p>
+                    <p>Station: {{ item.station }}</p>
+                    <!-- Keep the link if you want, but the whole card is now clickable -->
+                    <a href="{{ item.link }}" target="_blank">View Original Site</a>
                 </div>
             {% empty %}
                 <p>You haven't saved any restaurants yet.</p>
@@ -26,8 +57,16 @@
 
     <!-- Fixed Footer Buttons -->
     <div class="profile-footer">
-        <a href="{% url 'rest_search' %}" class="btn-secondary">Keep Searching</a>
+        <a href="{% url 'rest_search' %}" class="btn-action">продолжать поиск</a>
+        <!-- Logout Form -->
+        <button type="submit" form="logout-form" class="btn-action">выйти из аккаунта</button>
+        </form>
     </div>
+
+    <form id="logout-form" action="{% url 'logout' %}" method="post" style="display:none;">
+        {% csrf_token %}
+    </form>
+
 </div>
 
 <style>
@@ -37,4 +76,59 @@
 .scroll-window { flex-grow: 1; overflow-y: auto; border: 1px solid #ccc; padding: 15px; border-radius: 8px; }
 .profile-footer { padding: 20px; border-top: 1px solid #eee; text-align: center; }
 </style>
+
+        <dialog id="restaurantModal">
+            {% csrf_token %}
+            <div class="modal-info-scrollable">
+
+                <div class="upper-row" style="background-color: #F2F0EF; 
+                display: flex; 
+                flex-direction: row; 
+                gap: 4px; 
+                margin: 20px;
+                width: fit-content; 
+                border-radius: 8px;">
+                    <div class="modal-pic-and-short-info">
+                        <div class="modal-pic">
+                            <img id="modalImage" src="" alt="Restaurant Image" style="max-width: 100%; height: auto;">
+                        </div>
+
+                        <div class="modal-short-info">
+                            <div class="modal-short-info-head">
+                                <h2 id="modalRestName"></h2>
+                                <p id="modalRating"></p>
+                                <p id="modalShortDesc"></p>
+                            </div>
+                            <div class="modal-short-info-body">
+                                <p id="modalFee"></p>
+                                <details class="hours-details">
+                                    <summary>🕒 営業時間 (Opening Hours)</summary>
+                                    <div class="opening-hours-content">
+                                        <ul id="modalOpenHours">
+                                            <!-- Your JS 'Teleport' will still drop the <li> tags here! -->
+                                        </ul>
+                                        <p id="modalClosedOn" style="margin-top: 10px; color: #d9534f;"></p>
+                                    </div>
+                                </details>
+                                <p id="modalClosedOn"></p>
+                                <p id="modalStation"></p>
+                                <p id="modalTime"></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-long-info">
+                    <div id="modalLongDesc" style="line-height: 1.6; white-space: pre-wrap;"></div>
+                </div>
+
+                <div class="modal-buttons">
+                    <button id="modalSaveButton">в избранное</button>
+                    <span id="saveMessage" style="display:none; margin-left:10px;"></span>
+                    <button id="modalCloseButton">закрыть</button>
+                </div>
+            </div>            
+        </dialog>
+
+
 {% endblock %}

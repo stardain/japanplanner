@@ -16,7 +16,11 @@
 {% endblock %}
 
 {% block extra_head %}
+<script>
+    const SAVE_RESTAURANT_URL = "{% url 'save_restaurant' %}";
+</script>
 <script src="{% static 'analysis/search_result.js' %}"></script>
+<script src="{% static 'analysis/restaurant_search.js' %}"></script>
 {% endblock %}
 
 {% block content %}
@@ -202,6 +206,7 @@
         {% for rest in page_obj %}
             <div class="restaurant-card">
                 <h3 onclick="openDetails(this)" 
+                    data-link="{{ rest.link }}"
                     data-name="{{ rest.name }}"
                     data-rating="{{ rest.rating }}"
                     data-short-desc="{{ rest.short_desc }}"
@@ -245,6 +250,7 @@
         </div>
 
         <dialog id="restaurantModal">
+            {% csrf_token %}
             <div class="modal-info-scrollable">
 
                 <div class="upper-row" style="background-color: #F2F0EF; 
@@ -290,6 +296,7 @@
 
                 <div class="modal-buttons">
                     <button id="modalSaveButton">в избранное</button>
+                    <span id="saveMessage" style="display:none; margin-left:10px;"></span>
                     <button id="modalCloseButton">закрыть</button>
                 </div>
             </div>            

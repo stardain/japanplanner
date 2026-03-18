@@ -21,6 +21,7 @@ import asyncio
 from urllib.parse import urlencode
 from .services.food import customize_search, gather_all_urls, the_great_scraper, home_to_restaurant_time
 from .forms import CustomUserCreationForm
+from .models import SavedRestaurant
 
 def home(request):
     # This is where your search results logic usually lives
@@ -174,6 +175,52 @@ def sign_in_up(request):
 @login_required
 def account(request):
     # This uses the 'related_name' we set in the SavedRestaurant model
-    saved_items = request.user.saved_restaurants.all()
+    saved_items = request.user.saved_restaurants.all().order_by('-added_on')
     return render(request, 'account.html', {'saved_items': saved_items})
 
+def save_restaurant(request):
+    if not request.user.is_authenticated:
+        return JsonResponse({'status': 'error', 'message': 'Войдите в аккаунт'}, status=401)
+
+    link = request.POST.get('link')
+    print(f"DEBUG: Saving link -> {link}") # Check your terminal for this!
+    
+    if not link:
+        return JsonResponse({'status': 'error', 'message': 'No link provided'})
+
+    if request.method == 'POST':
+        # 1. Clean the rating
+        raw_rating = request.POST.get('rating')
+        try:
+            # Splits "4.5 / 5" and takes "4.5"
+            clean_rating = float(raw_rating.split('/')[0].strip()) 
+        except (ValueError, AttributeError, TypeError):
+            clean_rating = None
+
+        # 2. Find or Create the restaurant in the global DB
+        # We only use 'link' to identify it uniquely
+        restaurant, created = SavedRestaurant.objects.get_or_create(
+            link=request.POST.get('link'),
+            defaults={
+                'name': request.POST.get('name'),
+                'rating': clean_rating,
+                'short_desc': request.POST.get('short_desc'),
+                'long_desc': request.POST.get('long_desc'),
+                'station': request.POST.get('station'),
+                'closed_on': request.POST.get('closed_on'),
+                'open_hours': request.POST.get('open_hours'),
+                'fee': request.POST.get('fee'),
+                'main_pic': request.POST.get('main_pic'),
+                'time': request.POST.get('time')
+            }
+        )
+
+        # 3. Check if THIS specific user is already linked to THIS restaurant
+        if restaurant.users.filter(id=request.user.id).exists():
+            return JsonResponse({'status': 'exists', 'message': 'Уже сохранено'})
+        
+        # 4. Link the user to the restaurant
+        restaurant.users.add(request.user)
+        return JsonResponse({'status': 'success', 'message': 'Сохранено!'})
+
+    return JsonResponse({'status': 'error', 'message': 'Invalid request'}, status=400)

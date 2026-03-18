@@ -37,41 +37,45 @@ class StationNeighbours(models.Model):
         db_table = 'station_neighbours'
 
 class SavedRestaurant(models.Model):
-
-    user = models.ForeignKey(
+    # CHANGE THIS: Remove ForeignKey, add ManyToMany
+    users = models.ManyToManyField(
         settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
         related_name='saved_restaurants'
     )
     
-    # Core Info
-    name = models.CharField(max_length=255)
-    link = models.URLField(max_length=500)  # Validates http/https
+    # Keep the rest of your fields exactly as they are...
+    name = models.CharField(max_length=500)
+    link = models.URLField(max_length=500, unique=True) # Add unique=True here!
     main_pic = models.URLField(max_length=500, blank=True) # Link to the image
     
     # Rating (Using Decimal for 4.5, 4.8, etc.)
     rating = models.DecimalField(max_digits=3, decimal_places=1, null=True, blank=True)
     
     # Locations & Logistics
-    station = models.CharField(max_length=100, blank=True)
-    fee = models.CharField(max_length=100, blank=True) # Usually text like "¥1000-2000"
+    station = models.CharField(max_length=500, blank=True)
+    fee = models.CharField(max_length=500, blank=True) # Usually text like "¥1000-2000"
     
     # Hours (TextField is safer for varying list formats)
     open_hours = models.TextField(blank=True) 
-    closed_on = models.CharField(max_length=255, blank=True)
+    closed_on = models.CharField(max_length=500, blank=True)
     
     # Descriptions
-    short_desc = models.CharField(max_length=500, blank=True) # Brief snippet
+    short_desc = models.TextField(null=True, blank=True) 
     long_desc = models.TextField(blank=True) # Full details
     
     # Metadata
     added_on = models.DateTimeField(auto_now_add=True)
 
+    time = models.TextField(null=True, blank=True) 
+
+# In models.py
     def __str__(self):
-        return f"{self.name} (Saved by {self.user.username})"
+        return self.name  # Simplified because many users now own one restaurant
+
 
     class Meta:
         db_table = 'saved_restaurants'
+
 
 class CustomUser(AbstractUser):
     # This creates the actual database table

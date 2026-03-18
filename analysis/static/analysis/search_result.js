@@ -1,123 +1,160 @@
-/* 
-
-
-
-*/
-
 window.openDetails = function(element) {
+    // 1. Locate all Modal elements
     const modal = document.getElementById('restaurantModal');
-    const name = document.getElementById('modalRestName');
-    const rating = document.getElementById('modalRating');
-    const shortDesc = document.getElementById('modalShortDesc');
-    const longDesc = document.getElementById('modalLongDesc');
-    const time = document.getElementById('modalTime');
-    const station = document.getElementById('modalStation');
-    const openHours = document.getElementById('modalOpenHours');
-    const closedOn = document.getElementById('modalClosedOn');
-    const fee = document.getElementById('modalFee');
-    const image = document.getElementById('modalImage');
+    const nameEl = document.getElementById('modalRestName');
+    const ratingEl = document.getElementById('modalRating');
+    const shortDescEl = document.getElementById('modalShortDesc');
+    const longDescEl = document.getElementById('modalLongDesc');
+    const timeEl = document.getElementById('modalTime');
+    const stationEl = document.getElementById('modalStation');
+    const openHoursEl = document.getElementById('modalOpenHours');
+    const closedOnEl = document.getElementById('modalClosedOn');
+    const feeEl = document.getElementById('modalFee');
+    const imageEl = document.getElementById('modalImage');
+    const saveBtn = document.getElementById('modalSaveButton');
+    const saveMsg = document.getElementById('saveMessage'); 
 
+    if (!modal) {
+        console.error("Popup elements missing from HTML! Check your IDs.");
+        return;
+    }
+
+    // 2. Reset the Save Message visibility
+    saveMsg.style.display = 'none';
+
+    // 3. Fill Modal fields from the clicked card's dataset
+    // Note: JavaScript automatically converts data-short-desc to element.dataset.shortDesc (camelCase)
+    nameEl.textContent = element.dataset.name || "Restaurant Name";
+    ratingEl.textContent = (element.dataset.rating || "N/A") + " / 4";
+    shortDescEl.textContent = element.dataset.shortDesc || "";
+    timeEl.textContent = (element.dataset.time || "??") + " min away";
+    stationEl.textContent = element.dataset.station || "Station unknown";
+    closedOnEl.textContent = element.dataset.closedOn || "Always open";
+    feeEl.textContent = element.dataset.fee || "No fee info";
+    imageEl.src = element.dataset.mainPic || "";
+
+    // Format Long Description (Decodes and handles tags like 【Tag】)
+    let rawDesc = element.dataset.longDesc || "";
+    const cleanDesc = rawDesc.replace(/【([^】]+)】/g, '<div class="featured-tag">【$1】</div>');
+    if (longDescEl) longDescEl.innerHTML = cleanDesc;
+
+    // Pull Open Hours from the 'hidden-hours' div inside the specific card
     const card = element.closest('.restaurant-card');
     const hiddenHours = card.querySelector('.hidden-hours');
-
-    if (hiddenHours) {
-        // Copy the HTML from the card into the modal
-        openHours.innerHTML = hiddenHours.innerHTML;
-    } else {
-        openHours.innerHTML = "<li>Information not available</li>";
+    if (openHoursEl) {
+        openHoursEl.innerHTML = hiddenHours ? hiddenHours.innerHTML : "<li>Hours not available</li>";
     }
 
-    let rawDesc = element.dataset.longDesc || "";
-    const tempDiv = document.createElement("div");
-    tempDiv.innerHTML = rawDesc;
-    let decodedDesc = tempDiv.textContent;
-    const cleanDesc = rawDesc.replace(/【([^】]+)】/g, '<div class="featured-tag">【$1】</div>');
-    
-    if (longDesc) {
-        longDesc.innerHTML = cleanDesc;
-    }
-
-    if (modal) {
-        // наполняют консты выше, которые эту инфу кладут в попап
-        name.textContent = element.dataset.name || "Японский Дракон";
-        rating.textContent = (element.dataset.rating || "3") + " / 4";
-        shortDesc.textContent = element.dataset.shortDesc || "просто ресторан нечего сказать абсолютно";
-        time.textContent = (element.dataset.travelTime || "30") + " минут в пути";
-        station.textContent = element.dataset.station || "левая станция";
-        closedOn.textContent = element.dataset.closedOn || "закрыт всегда";
-        fee.textContent = element.dataset.fee || "50 рублей на чаевые";
-        image.src = element.dataset.mainPic;
-
-        modal.showModal();
-    } else {
-        console.error("Popup elements missing from HTML!");
-    }
-};
-
-document.addEventListener('DOMContentLoaded', () => {
-    const modal = document.getElementById('restaurantModal');
+    // 4. FIX: Re-bind the Close Button
+    // We re-assign this every time the modal opens to ensure it's active
     const closeBtn = document.getElementById('modalCloseButton');
     if (closeBtn) {
         closeBtn.onclick = () => modal.close();
     }
-});
 
-//
+    // 5. FIX: Re-bind the Save Button
+    // Cloning the button removes all OLD event listeners from previous popups
+    const newSaveBtn = saveBtn.cloneNode(true);
 
-document.addEventListener('DOMContentLoaded', function() {
+    // To this (safety check):
+    if (saveBtn) {
+        const newSaveBtn = saveBtn.cloneNode(true);
+        saveBtn.parentNode.replaceChild(newSaveBtn, saveBtn);
+        newSaveBtn.onclick = function() {
+            console.log("Saving restaurant: " + element.dataset.name);
+            
+            const formData = new FormData();
+            formData.append('name', element.dataset.name);
+            formData.append('link', element.dataset.link);
+            formData.append('rating', element.dataset.rating);
+            formData.append('short_desc', element.dataset.shortDesc);
+            formData.append('long_desc', element.dataset.longDesc);
+            formData.append('station', element.dataset.station);
+            formData.append('closed_on', element.dataset.closedOn);
+            formData.append('fee', element.dataset.fee);
+            formData.append('main_pic', element.dataset.mainPic);
+            formData.append('open_hours', hiddenHours ? hiddenHours.innerHTML : "");
+            formData.append('time', element.dataset.travelTime);
 
-const token = document.querySelector('[name=csrfmiddlewaretoken]').value;
+            const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
 
-function sendData() {
-    const checkedBoxes = document.querySelectorAll('input[name="additions"]:checked');
-    const selectedAdditions = Array.from(checkedBoxes).map(cb => cb.value);
+        console.log("Sending fetch request to /analysis/save_restaurant/..."); // NEW CHECKPOINT
 
-    const data = {
-
-        amount: document.getElementById('amount').value,
-        specialty: document.querySelector('input[name="specialty"]:checked')?.value || '',
-        additions: selectedAdditions,
-        sorting: document.querySelector('input[name="sorting"]:checked')?.value || '',
-        address: document.getElementById('address').value,
-        day: document.getElementById('day-select').value,
-
+        fetch("/analysis/save_restaurant/", { 
+            method: 'POST',
+            body: formData,
+            headers: {
+                "X-CSRFToken": document.querySelector('[name=csrfmiddlewaretoken]').value,
+                "X-Requested-With": "XMLHttpRequest"
+            }
+        })
+        .then(response => {
+            console.log("Response received with status:", response.status); // NEW CHECKPOINT
+            return response.json();
+        })
+        .then(data => {
+            console.log("Data returned from server:", data); // NEW CHECKPOINT
+            saveMsg.textContent = data.message;
+            saveMsg.style.display = 'inline';
+        })
+        .catch(err => {
+            console.error("CRITICAL FETCH ERROR:", err); // THIS WILL SHOW WHY IT FAILED
+        });
+    };
+        // 6. Final step: display the popup
+        modal.showModal();
     };
 
-    searchbutton.disabled = true;
-    buttontext.style.display = 'none';
-    spinner.style.display = 'inline';
+/* --- Global Search Form Logic --- */
+document.addEventListener('DOMContentLoaded', function() {
+    const searchBtn = document.getElementById('searchbutton');
+    if (!searchBtn) return;
 
-    fetch('/analysis/rest_search/', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRFToken': token,
-        },
-        body: JSON.stringify(data)
-    })
-    .then(response => response.json())
-    .then(data => {
-        console.log("Success:", data);
-        if (data.redirect_url) {
-            // This actually moves the user to the next page
-            window.location.href = data.redirect_url;
-        }
-    })
-    .catch(error => console.error("Error:", error))
-    .finally(() => {
-        // --- STEP B: RESET BUTTON (Happens on Success OR Error) ---
-        searchbutton.disabled = false;
-        buttontext.style.display = 'inline';
-        spinner.style.display = 'none';
-    });
-}
+    const tokenEl = document.querySelector('[name=csrfmiddlewaretoken]');
+    const token = tokenEl ? tokenEl.value : "";
+    const spinner = document.getElementById('spinner');
+    const buttontext = document.getElementById('buttontext');
 
-    const btn = document.getElementById('searchbutton');
-    if (btn) {
-        searchbutton.addEventListener('click', sendData);
-        console.log("EventListener attached!");
-    } else {
-        console.error("Button not found!");
+    function sendSearchData() {
+        const checkedBoxes = document.querySelectorAll('input[name="additions"]:checked');
+        const selectedAdditions = Array.from(checkedBoxes).map(cb => cb.value);
+
+        const data = {
+            amount: document.getElementById('amount').value,
+            specialty: document.querySelector('input[name="specialty"]:checked')?.value || '',
+            additions: selectedAdditions,
+            sorting: document.querySelector('input[name="sorting"]:checked')?.value || '',
+            address: document.getElementById('address').value,
+            day: document.getElementById('day-select').value,
+        };
+
+        // UI Feedback during request
+        searchBtn.disabled = true;
+        if (buttontext) buttontext.style.display = 'none';
+        if (spinner) spinner.style.display = 'inline';
+
+        fetch('/analysis/rest_search/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': token,
+            },
+            body: JSON.stringify(data)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.redirect_url) {
+                window.location.href = data.redirect_url;
+            }
+        })
+        .catch(error => console.error("Search Error:", error))
+        .finally(() => {
+            searchBtn.disabled = false;
+            if (buttontext) buttontext.style.display = 'inline';
+            if (spinner) spinner.style.display = 'none';
+        });
     }
 
+    searchBtn.addEventListener('click', sendSearchData);
 });
+}

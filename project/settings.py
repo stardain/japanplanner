@@ -82,8 +82,8 @@ DATABASES = {
         'NAME': 'japanmetro',
         'USER': 'natasha',
         'PASSWORD': 'hoesmad666-',
-        'HOST': 'localhost',
-        'PORT': '6432',
+        #'HOST': '127.0.0.1',
+        #'PORT': '6432',
         'CONN_MAX_AGE': 0
     }
 }
