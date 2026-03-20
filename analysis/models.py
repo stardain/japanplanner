@@ -36,12 +36,18 @@ class StationNeighbours(models.Model):
         managed = False
         db_table = 'station_neighbours'
 
+class CustomUser(AbstractUser):
+    # This creates the actual database table
+    class Meta:
+        db_table = 'user_info'
+
 class SavedRestaurant(models.Model):
     # CHANGE THIS: Remove ForeignKey, add ManyToMany
-    users = models.ManyToManyField(
-        settings.AUTH_USER_MODEL,
-        related_name='saved_restaurants'
-    )
+    #users = models.ManyToManyField(
+    #    settings.AUTH_USER_MODEL,
+    #    through='UserToRestaurant',
+    #    related_name='saved_restaurants'
+    #)
     
     # Keep the rest of your fields exactly as they are...
     name = models.CharField(max_length=500)
@@ -66,18 +72,23 @@ class SavedRestaurant(models.Model):
     # Metadata
     added_on = models.DateTimeField(auto_now_add=True)
 
-    time = models.TextField(null=True, blank=True) 
+    time = models.TextField(null=True, blank=True)
 
 # In models.py
     def __str__(self):
         return self.name  # Simplified because many users now own one restaurant
 
-
     class Meta:
         db_table = 'saved_restaurants'
 
+class UserToRestaurant(models.Model):
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+    restaurant = models.ForeignKey(SavedRestaurant, on_delete=models.CASCADE)
+    
+    # THIS is where the user-specific data lives
+    travel_time = models.CharField(max_length=255, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
 
-class CustomUser(AbstractUser):
-    # This creates the actual database table
     class Meta:
-        db_table = 'user_info'
+        # Prevents the same user from saving the same restaurant twice
+        unique_together = ('user', 'restaurant')

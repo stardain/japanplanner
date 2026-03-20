@@ -21,7 +21,7 @@ import asyncio
 from urllib.parse import urlencode
 from .services.food import customize_search, gather_all_urls, the_great_scraper, home_to_restaurant_time
 from .forms import CustomUserCreationForm
-from .models import SavedRestaurant
+from .models import SavedRestaurant, UserToRestaurant
 
 def home(request):
     # This is where your search results logic usually lives
@@ -174,9 +174,10 @@ def sign_in_up(request):
 
 @login_required
 def account(request):
-    # This uses the 'related_name' we set in the SavedRestaurant model
-    saved_items = request.user.saved_restaurants.all().order_by('-added_on')
-    return render(request, 'account.html', {'saved_items': saved_items})
+    # Fetch relations instead of just restaurants
+    user_relations = UserToRestaurant.objects.filter(user=request.user).select_related('restaurant')
+    
+    return render(request, 'account.html', {'saved_items': user_relations})
 
 def save_restaurant(request):
     if not request.user.is_authenticated:
@@ -213,6 +214,12 @@ def save_restaurant(request):
                 'main_pic': request.POST.get('main_pic'),
                 'time': request.POST.get('time')
             }
+        )
+
+        relation, rel_created = UserToRestaurant.objects.update_or_create(
+            user=request.user,
+            restaurant=restaurant,
+            defaults={'travel_time': request.POST.get('time')}
         )
 
         # 3. Check if THIS specific user is already linked to THIS restaurant
