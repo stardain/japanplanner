@@ -12,7 +12,11 @@ window.openDetails = function(element) {
     const feeEl = document.getElementById('modalFee');
     const imageEl = document.getElementById('modalImage');
     const saveBtn = document.getElementById('modalSaveButton');
+    const deleteBtn = document.getElementById('modalDeleteButton');
     const saveMsg = document.getElementById('saveMessage'); 
+    const newDeleteBtn = deleteBtn.cloneNode(true);
+
+    deleteBtn.parentNode.replaceChild(newDeleteBtn, deleteBtn);
 
     if (!modal) {
         console.error("Popup elements missing from HTML! Check your IDs.");
@@ -157,4 +161,59 @@ document.addEventListener('DOMContentLoaded', function() {
 
     searchBtn.addEventListener('click', sendSearchData);
 });
+
+newDeleteBtn.onclick = function() {
+    if (!confirm("Вы уверены?")) return;
+
+    console.log("Attempting to delete restaurant with link:", element.dataset.link);
+
+    fetch("/analysis/delete_restaurant/", { 
+        method: 'POST',
+        body: JSON.stringify({ 'link': element.dataset.link }),
+        headers: {
+            // Ensure this selector actually finds your CSRF token!
+            "X-CSRFToken": document.querySelector('[name=csrfmiddlewaretoken]').value,
+            "Content-Type": "application/json",
+            "X-Requested-With": "XMLHttpRequest"
+        }
+    })
+    .then(response => {
+        console.log("Server responded with status:", response.status);
+        if (!response.ok) throw new Error('Network response was not ok');
+        return response.json();
+    })
+    .then(data => {
+        console.log("Server data:", data);
+        if (data.status === 'success') {
+            const modal = document.getElementById('restaurantModal');
+            modal.close();
+            
+            // This is the card on the account page
+            const card = element.closest('.restaurant-card');
+            if (card) {
+                card.remove(); 
+                console.log("Card removed from UI");
+            }
+        } else {
+            alert("Ошибка: " + data.message);
+        }
+    })
+    .catch(err => {
+        console.error("Fetch Error:", err);
+        alert("CRITICAL ERROR: Check the console (F12)");
+    });
+};
+
+}
+
+function copyToClipboard(elementId) {
+    const el = document.getElementById(elementId);
+    // .innerText only gets the visible text (the name), not the SVG code
+    const textToCopy = el.innerText; 
+    const feedback = document.getElementById('copyFeedback');
+
+    navigator.clipboard.writeText(textToCopy).then(() => {
+        feedback.style.display = 'inline';
+        setTimeout(() => { feedback.style.display = 'none'; }, 1500);
+    });
 }

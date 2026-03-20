@@ -181,3 +181,16 @@ nav {
     cursor: pointer;
     font-size: 14px;
 }
+
+#modalRestName:hover {
+    color: #007bff; /* Changes color on hover */
+    text-decoration: underline dotted;
+}
+
+/* Optional: Add a transition for the feedback message */
+#copyFeedback {
+    transition: opacity 0.3s ease;
+    background: #e6fffa;
+    padding: 2px 8px;
+    border-radius: 4px;
+}

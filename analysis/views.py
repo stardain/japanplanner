@@ -200,7 +200,7 @@ def save_restaurant(request):
 
         # 2. Find or Create the restaurant in the global DB
         # We only use 'link' to identify it uniquely
-        restaurant, created = SavedRestaurant.objects.get_or_create(
+        restaurant, created = SavedRestaurant.objects.update_or_create(
             link=request.POST.get('link'),
             defaults={
                 'name': request.POST.get('name'),
@@ -229,5 +229,33 @@ def save_restaurant(request):
         # 4. Link the user to the restaurant
         restaurant.users.add(request.user)
         return JsonResponse({'status': 'success', 'message': 'Сохранено!'})
+
+    return JsonResponse({'status': 'error', 'message': 'Invalid request'}, status=400)
+
+
+@login_required
+def delete_restaurant(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            link = data.get('link')
+            
+            # 1. Get the restaurant
+            restaurant = SavedRestaurant.objects.get(link=link)
+            
+            # 2. Delete the relation for THIS user specifically
+            UserToRestaurant.objects.filter(user=request.user, restaurant=restaurant).delete()
+            
+            # 3. Orphan Check: If no one else has saved this restaurant, delete it globally
+            if not UserToRestaurant.objects.filter(restaurant=restaurant).exists():
+                restaurant.delete()
+                print(f"DEBUG: Deleted {restaurant.name} globally (no more users).")
+            
+            return JsonResponse({'status': 'success', 'message': 'Удалено из списка'})
+            
+        except SavedRestaurant.DoesNotExist:
+            return JsonResponse({'status': 'error', 'message': 'Ресторан не найден'})
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': str(e)})
 
     return JsonResponse({'status': 'error', 'message': 'Invalid request'}, status=400)

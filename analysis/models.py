@@ -43,11 +43,11 @@ class CustomUser(AbstractUser):
 
 class SavedRestaurant(models.Model):
     # CHANGE THIS: Remove ForeignKey, add ManyToMany
-    #users = models.ManyToManyField(
-    #    settings.AUTH_USER_MODEL,
-    #    through='UserToRestaurant',
-    #    related_name='saved_restaurants'
-    #)
+    users = models.ManyToManyField(
+        settings.AUTH_USER_MODEL,
+        through='UserToRestaurant',
+        related_name='saved_restaurants'
+    )
     
     # Keep the rest of your fields exactly as they are...
     name = models.CharField(max_length=500)
@@ -92,3 +92,4 @@ class UserToRestaurant(models.Model):
     class Meta:
         # Prevents the same user from saving the same restaurant twice
         unique_together = ('user', 'restaurant')
+        db_table = 'user_to_rest'

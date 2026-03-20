@@ -13,4 +13,5 @@ urlpatterns = [
     path('account/', views.account, name='account'),
     path('save_restaurant/', views.save_restaurant, name='save_restaurant'),
     path('logout/', auth_views.LogoutView.as_view(next_page='home'), name='logout'),
+    path('delete_restaurant/', views.delete_restaurant, name='delete_restaurant'),
 ]
